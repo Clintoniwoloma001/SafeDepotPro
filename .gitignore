@@ -12,6 +12,15 @@ dist
 dist-ssr
 *.local
 
+# dotenv environment variable files
+.env
+.env.*
+!.env.example
+
+# Supabase
+supabase/.temp
+supabase/.branches
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
