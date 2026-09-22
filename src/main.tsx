@@ -10,6 +10,14 @@ import { queryClient } from '@/lib/query-client'
 import App from './App'
 import './index.css'
 
+if (import.meta.env.PROD) {
+  console.log(
+    '%cSafeDepot Pro',
+    'font-weight:bold;font-size:14px;color:#cc0000',
+    `\nDeveloped by Clinton Iwoloma — Flatra Tech Ltd\nBuild ${__BUILD_HASH__}`,
+  )
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>

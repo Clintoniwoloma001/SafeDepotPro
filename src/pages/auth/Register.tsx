@@ -51,7 +51,7 @@ export default function Register() {
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-slate-100 to-slate-200 p-4">
       <div className="w-full max-w-sm">
         <div className="mb-6 flex justify-center">
-          <img src="/logo.svg" alt="SafeDepot Pro" className="h-14 w-auto" />
+          <img src="/logos.png" alt="SafeDepot Pro" className="h-14 w-auto" />
         </div>
         <Card>
           <CardHeader>

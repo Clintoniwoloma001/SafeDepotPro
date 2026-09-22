@@ -114,7 +114,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <div className="flex h-full flex-col bg-gradient-to-b from-sidebar-from to-sidebar-to text-sidebar-foreground">
       <div className="flex items-center gap-2 px-5 py-4">
-        <img src="/logo.svg" alt="SafeDepot Pro" className="h-9 w-auto" />
+        <img src="/logos.png" alt="SafeDepot Pro" className="h-9 w-auto" />
       </div>
 
       <div className="px-4 pb-2">

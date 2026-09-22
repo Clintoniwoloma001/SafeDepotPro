@@ -153,3 +153,30 @@ export function manHoursPeriod(): { start: string; end: string } {
 }
 
 export const DOWNLOAD_SOURCE_BASE = '/download-source'
+
+/**
+ * KPI icon-badge tints (soft fills on white — hue carries meaning, saturation is muted).
+ * chip = icon badge background/text, value = big-number color.
+ */
+export const KPI_HUES = {
+  green: { chip: 'bg-green-50 text-green-600', value: 'text-rag-good' },
+  amber: { chip: 'bg-amber-50 text-amber-600', value: 'text-rag-warn' },
+  red: { chip: 'bg-red-50 text-red-600', value: 'text-rag-bad' },
+  orange: { chip: 'bg-orange-50 text-orange-600', value: 'text-foreground' },
+  blue: { chip: 'bg-blue-50 text-blue-600', value: 'text-foreground' },
+  purple: { chip: 'bg-purple-50 text-purple-600', value: 'text-foreground' },
+  slate: { chip: 'bg-gray-100 text-gray-600', value: 'text-foreground' },
+} as const
+
+export type KpiHue = keyof typeof KPI_HUES
+
+/** Semantic → hue mapping used by the dashboard KPI grid. */
+export const SDP_SEMANTIC_HUES = {
+  hazards: 'red',
+  capa: 'purple',
+  permits: 'blue',
+  inspections: 'purple',
+  incidents: 'orange',
+  personnel: 'blue',
+  depots: 'slate',
+} as const

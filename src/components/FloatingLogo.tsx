@@ -10,14 +10,8 @@ export default function FloatingLogo() {
   const target = settings.company_website
 
   const inner = (
-    <span className="block">
-      <img src="/logo.svg" alt="SafeDepot Pro" className="hidden h-10 w-auto" />
-      <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand text-xl font-bold text-white shadow-lg">
-        <svg viewBox="0 0 64 64" className="h-8 w-8" aria-hidden="true">
-          <path d="M10 26 L32 8 L54 26 L48 48 L16 48 Z" fill="none" stroke="#fff" strokeWidth="5" strokeLinejoin="round" />
-          <rect x="24" y="32" width="16" height="10" rx="2" fill="#f59e0b" />
-        </svg>
-      </span>
+    <span className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl bg-brand shadow-lg">
+      <img src="/logo.png" alt="SafeDepot Pro" className="h-10 w-auto object-contain" />
     </span>
   )
 
