@@ -53,6 +53,13 @@ export default defineConfig({
     // Tied to a verifiable git commit; fingerprint also appears in the bundle banner.
     __BUILD_HASH__: JSON.stringify(gitCommitHash),
   },
+  server: {
+    proxy: {
+      // Source-download guard runs on the Express server (npm run server).
+      '/download-source': 'http://localhost:8787',
+      '/health': 'http://localhost:8787',
+    },
+  },
   build: {
     rollupOptions: {
       output: {
