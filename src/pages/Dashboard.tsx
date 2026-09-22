@@ -18,6 +18,7 @@ import { listTruckInspections } from '@/services/inspections.service'
 import { listAssets } from '@/services/assets.service'
 import { listPersonnel } from '@/services/personnel.service'
 import { listPermits } from '@/services/permits.service'
+import { PageHeader, SectionCard, KPICard } from '@/components/shared'
 import type { RoutineTask } from '@/types/entities'
 import { todayIso, formatDate } from '@/lib/utils'
 import { RAG_THRESHOLDS } from '@/lib/constants'
@@ -90,60 +91,55 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold">Dashboard</h1>
-          <p className="text-sm text-muted-foreground">
-            {formatDate(todayIso())}
-            {depotName && <span className="ml-2 font-medium text-foreground">· {depotName}</span>}
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title="Dashboard"
+        subtitle={`${formatDate(todayIso())}${depotName ? ` · ${depotName}` : ''}`}
+      />
 
       {user.isCountryHead ? (
         <>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-            <KpiCard icon={AlertTriangle} label="Open incidents" value={openIncidents.length} tone={openIncidents.length > 0 ? 'warn' : 'good'} to="/incidents" />
-            <KpiCard icon={ShieldAlert} label="Open hazards" value={openHazards.length} tone={openHazards.length > 0 ? 'warn' : 'good'} to="/hazards" />
-            <KpiCard icon={Wrench} label="Open CAPA" value={openCapas.length} tone={overdueCapas.length > 0 ? 'bad' : 'warn'} to="/capa" />
-            <KpiCard icon={ClipboardCheck} label="Active permits" value={activePermits.length} tone="neutral" to="/permits" />
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            <Link to="/incidents">
+              <KPICard icon={<AlertTriangle className="h-5 w-5" />} iconHue="amber" label="Open incidents" value={openIncidents.length} tone={openIncidents.length > 0 ? 'warn' : 'good'} />
+            </Link>
+            <Link to="/hazards">
+              <KPICard icon={<ShieldAlert className="h-5 w-5" />} iconHue="amber" label="Open hazards" value={openHazards.length} tone={openHazards.length > 0 ? 'warn' : 'good'} />
+            </Link>
+            <Link to="/capa">
+              <KPICard icon={<Wrench className="h-5 w-5" />} iconHue="red" label="Open CAPA" value={openCapas.length} tone={overdueCapas.length > 0 ? 'bad' : 'warn'} />
+            </Link>
+            <Link to="/permits">
+              <KPICard icon={<ClipboardCheck className="h-5 w-5" />} iconHue="blue" label="Active permits" value={activePermits.length} />
+            </Link>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Safety posture</CardTitle>
-              </CardHeader>
-              <CardContent className="grid grid-cols-2 gap-3 text-sm">
+            <SectionCard title="Safety posture" description="Live portfolio snapshot">
+              <div className="grid grid-cols-2 gap-3 text-sm md:grid-cols-3">
                 <Stat label="Total incidents" value={(app.incidents ?? []).length} />
                 <Stat label="Total hazards" value={(app.hazards ?? []).length} />
                 <Stat label="Total CAPA records" value={(app.capas ?? []).length} />
                 <Stat label="Overdue CAPA" value={overdueCapas.length} />
                 <Stat label="Inspections recorded" value={(app.inspections ?? []).length} />
                 <Stat label="Personnel on file" value={(app.personnel ?? []).length} />
-              </CardContent>
-            </Card>
+              </div>
+            </SectionCard>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Today&apos;s compliance</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="mb-1 flex items-center justify-between text-sm">
-                  <span>{doneToday}/{dueToday.length} due tasks completed</span>
-                  <span className="font-bold">{compliance}%</span>
-                </div>
-                <Progress value={compliance} className={compliance >= 80 ? '[&>div]:bg-rag-good' : compliance >= 60 ? '[&>div]:bg-rag-warn' : '[&>div]:bg-rag-bad'} />
-                <Link to="/tasks" className="mt-3 inline-block text-sm text-brand hover:underline">
-                  Open task analytics →
-                </Link>
-              </CardContent>
-            </Card>
+            <SectionCard title="Today&apos;s compliance" description="Routine task completion against due targets">
+              <div className="mb-1 flex items-center justify-between text-sm">
+                <span>{doneToday}/{dueToday.length} due tasks completed</span>
+                <span className="font-bold">{compliance}%</span>
+              </div>
+              <Progress value={compliance} className={compliance >= 80 ? '[&>div]:bg-rag-good' : compliance >= 60 ? '[&>div]:bg-rag-warn' : '[&>div]:bg-rag-bad'} />
+              <Link to="/tasks" className="mt-3 inline-block text-sm text-brand hover:underline">
+                Open task analytics →
+              </Link>
+            </SectionCard>
           </div>
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Depot overview ({RAG_THRESHOLDS.GOOD * 100}%+ / {RAG_THRESHOLDS.WARN * 100}% targets)</CardTitle>
+              <CardTitle className="text-base font-semibold">Depot overview ({RAG_THRESHOLDS.GOOD * 100}%+ / {RAG_THRESHOLDS.WARN * 100}% targets)</CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground">
               Track per-depot task compliance in Routine Tasks analytics.
@@ -164,13 +160,13 @@ export default function Dashboard() {
 
           <Card>
             <CardHeader className="flex-row items-center justify-between space-y-0">
-              <CardTitle className="text-base">Due today</CardTitle>
+              <CardTitle className="text-base font-semibold">Due today</CardTitle>
               {dueToday.length > 0 && <Badge variant="outline">{doneToday}/{dueToday.length}</Badge>}
             </CardHeader>
             <CardContent className="space-y-2">
               {dueToday.length === 0 && <p className="py-6 text-center text-sm text-muted-foreground">Nothing due today. Great work!</p>}
               {dueToday.map(({ task, completedToday, blockedReason }) => (
-                <div key={task.id} className="flex items-center gap-3 rounded-md border p-2.5">
+                <div key={task.id} className="flex items-center gap-3 rounded-xl border p-3">
                   <div className="flex-1">
                     <span className="font-medium">{task.title}</span>
                     {blockedReason && !completedToday && <div className="text-xs text-amber-700">{blockedReason}</div>}
@@ -208,40 +204,9 @@ export default function Dashboard() {
   )
 }
 
-function KpiCard({
-  icon: Icon,
-  label,
-  value,
-  tone,
-  to,
-}: {
-  icon: typeof AlertTriangle
-  label: string
-  value: number
-  tone: 'good' | 'warn' | 'bad' | 'neutral'
-  to: string
-}) {
-  const color = { good: 'text-rag-good', warn: 'text-rag-warn', bad: 'text-rag-bad', neutral: 'text-foreground' }[tone]
-  return (
-    <Link to={to}>
-      <Card className="transition-colors hover:bg-muted/50">
-        <CardContent className="flex items-center gap-3 pt-6">
-          <span className={`rounded-md bg-muted p-2 ${color}`}>
-            <Icon className="h-5 w-5" />
-          </span>
-          <div>
-            <div className="text-2xl font-bold">{value}</div>
-            <div className="text-xs text-muted-foreground">{label}</div>
-          </div>
-        </CardContent>
-      </Card>
-    </Link>
-  )
-}
-
 function Stat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="flex items-center justify-between rounded-md border px-3 py-2">
+    <div className="flex items-center justify-between rounded-xl border px-3 py-2">
       <span className="text-muted-foreground">{label}</span>
       <b>{value}</b>
     </div>

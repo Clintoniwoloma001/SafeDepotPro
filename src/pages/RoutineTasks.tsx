@@ -22,6 +22,7 @@ import { todayIso } from '@/lib/utils'
 import TaskAnalyticsDashboard from '@/components/tasks/TaskAnalyticsDashboard'
 import TaskFormDialog from '@/components/tasks/TaskFormDialog'
 import CompletionDialog, { type CompletionInput } from '@/components/tasks/CompletionDialog'
+import { PageHeader } from '@/components/shared'
 
 export default function RoutineTasks() {
   const user = useCurrentUser()
@@ -105,15 +106,15 @@ export default function RoutineTasks() {
   if (user.isCountryHead) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Routine Tasks</h1>
-            <p className="text-sm text-muted-foreground">Analytics view for management</p>
-          </div>
-          <Button onClick={() => setCreateOpen(true)}>
-            <Plus className="mr-1 h-4 w-4" /> New task
-          </Button>
-        </div>
+        <PageHeader
+          title="Routine Tasks"
+          subtitle="Analytics view for management"
+          actions={
+            <Button onClick={() => setCreateOpen(true)}>
+              <Plus className="mr-1 h-4 w-4" /> New task
+            </Button>
+          }
+        />
         <TaskAnalyticsDashboard tasks={tasks} history={history} user={user} depotId={user.effectiveDepotId} />
         <TaskFormDialog open={createOpen} onOpenChange={setCreateOpen} />
       </div>
@@ -122,18 +123,16 @@ export default function RoutineTasks() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold">Routine Tasks</h1>
-          <p className="text-sm text-muted-foreground">
-            {doneToday}/{dueTodayCount} due tasks completed today
-          </p>
-        </div>
-        <div className="relative w-56">
-          <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search tasks…" className="pl-8" />
-        </div>
-      </div>
+      <PageHeader
+        title="Routine Tasks"
+        subtitle={`${doneToday}/${dueTodayCount} due tasks completed today`}
+        actions={
+          <div className="relative w-56">
+            <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search tasks…" className="pl-8" />
+          </div>
+        }
+      />
 
       <Card>
         <CardContent className="pt-6">
@@ -220,7 +219,7 @@ function TaskRow({
   onComplete: () => void
 }) {
   return (
-    <div className="flex items-center gap-3 rounded-lg border bg-card p-3">
+    <div className="flex items-center gap-3 rounded-xl border bg-card p-3">
       <div className="flex-1">
         <div className="flex items-center gap-2">
           <span className="font-medium">{task.title}</span>
