@@ -1,33 +1,90 @@
-# Logs
-logs
-*.log
+# === SafeDepot Pro — Flutter + Supabase ===
+
+# ---- Secrets / env (never commit) ----
+.env
+.env.*
+.env.local
+!.env.example
+env/app.json
+env/*.local.json
+supabase/.env*
+!.env.example
+!env/app.example.json
+
+# ---- Credential stores / keystores ----
+*.jks
+*.keystore
+*.p12
+*.pem
+*.key
+*.mobileprovision
+android/key.properties
+android/app/keystore.properties
+ios/Runner/GoogleService-Info.plist
+.android/
+.shorebird/secrets.json
+*.shorebirdkey
+
+# ---- Flutter / Dart ----
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+# NOTE: pubspec.lock is intentionally COMMITTED — Flutter apps should pin
+# dependency versions so Shorebird releases/patches are reproducible.
+# Generated
+*.g.dart
+*.freezed.dart
+*.mocks.dart
+coverage/
+
+# ---- Node (legacy web app) ----
+node_modules
+dist
+dist-ssr
+*.local
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
-
-# dotenv environment variable files
-.env
-.env.*
-!.env.example
-
-# Supabase
+# ---- Supabase ----
 supabase/.temp
 supabase/.branches
+supabase/.gitignore
 
-# Editor directories and files
+# ---- Shorebird / OTA ----
+.shorebird/
+shorebird/secrets.json
+shorebird_cache/
+
+# ---- IDE / OS ----
+.idea/
 .vscode/*
 !.vscode/extensions.json
-.idea
 .DS_Store
+*.swp
+*.swo
+*~
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
-*.sw?
+*.iml
+
+# ---- Build outputs ----
+*.apk
+*.aab
+*.ipa
+*.aar
+*.zip
+*.tar.gz
+!**/assets/**/*.zip
+
+# ---- Logs ----
+*.log
+logs/
