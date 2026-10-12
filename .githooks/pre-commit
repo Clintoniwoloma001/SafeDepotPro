@@ -10,9 +10,11 @@ dart run tool/add_headers.dart --check
 echo "pre-commit: checking for secrets in staged content…"
 # Fail if anything that looks like a credential is staged. Values are matched,
 # never printed.
-if git diff --cached -U0 | grep -qE '^\+.*(eyJ[A-Za-z0-9_-]{30,}|sbp_[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|-----BEGIN (RSA|OPENSSH|EC) PRIVATE KEY-----)'; then
+# Documentation placeholders such as storePassword=<keystore password> are
+# allowed, so angle-bracketed tokens are excluded from the match.
+if git diff --cached -U0 | grep -E '^\+' | grep -qE 'eyJ[A-Za-z0-9_-]{30,}|sbp_[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|-----BEGIN (RSA|OPENSSH|EC) PRIVATE KEY-----|storePassword=[^<[:space:]]{4,}'; then
   echo "pre-commit: FAIL — a staged file looks like it contains a credential."
-  echo "  Inspect with: git diff --cached | grep -E 'eyJ[A-Za-z0-9_-]{30,}|sbp_[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}'"
+  echo "  Inspect with: git diff --cached | grep -E 'eyJ[A-Za-z0-9_-]{30,}|sbp_[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|storePassword='"
   exit 1
 fi
 if git diff --cached --name-only | grep -qE '(^|/)(\.env|\.env\..*|key\.properties|.*\.(jks|keystore|p12|pem))$'; then
