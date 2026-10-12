@@ -1,0 +1,99 @@
+// © Flatra Tech Ltd. All rights reserved.
+// Designed and developed by Clinton Iwoloma — The Imaginr, CEO, Flatra Tech Ltd.
+// Proprietary and confidential. Unauthorized copying, modification, distribution or reuse is prohibited.
+// Contact: +2349025975247
+
+PROPRIETARY SOFTWARE LICENSE
+
+Copyright (c) 2026 Flatra Tech Ltd. All rights reserved.
+
+Author: Clinton Iwoloma — The Imaginr, CEO, Flatra Tech Ltd.
+
+1. DEFINITIONS
+
+   "Software" means the SafeDepot Pro application, including its Flutter
+   application source, Android host project, build configuration, Supabase
+   database migrations, database functions, policies, seed data, edge
+   functions, build tooling, tests, documentation, and any accompanying
+   assets, in both source and compiled form.
+
+   "You" means the individual or legal entity exercising permissions granted
+   by this licence.
+
+2. GRANT OF RIGHTS
+
+   No licence, right, or interest in or to the Software is granted, whether by
+   implication, estoppel, or otherwise, except the limited permission to view
+   the Software for the sole purpose of evaluating it.
+
+   All rights not expressly granted are reserved by Flatra Tech Ltd.
+
+3. RESTRICTIONS
+
+   You may NOT, without the prior written permission of Flatra Tech Ltd:
+
+     a. copy, reproduce, or republish the Software, in whole or in part;
+     b. modify, adapt, translate, or create derivative works of the Software;
+     c. distribute, sublicense, sell, rent, lease, or lend the Software to
+        any third party;
+     d. remove, alter, obscure, or replace any copyright notice, attribution,
+        credit, branding, trade name, or version marker appearing in the
+        Software or in any output of the Software;
+     e. decompile, reverse engineer, or disassemble the Software, except to
+        the limited extent that this restriction is prohibited by applicable
+        law;
+     f. use the Software, or any portion of it, to build a competing product
+        or service;
+     g. publish, upload, or make publicly available any build of the Software,
+        or any modified version of it, on any application store, marketplace,
+        repository, or other distribution channel.
+
+4. ATTRIBUTION
+
+   The Software contains attribution identifying Flatra Tech Ltd and its
+   author. That attribution is a material term of this licence. Removing,
+   altering, concealing, or re-attributing it is a breach of this licence in
+   addition to being an infringement of copyright, and the Software contains
+   technical measures that detect such alteration and disable operation.
+
+5. CONFIDENTIALITY
+
+   The Software is proprietary and confidential. It is disclosed to You in
+   confidence and You agree to hold it in strict confidence and not to
+   disclose it to any third party.
+
+6. TERMINATION
+
+   This licence terminates automatically and immediately if You breach any of
+   its terms. Upon termination You must destroy all copies of the Software in
+   Your possession and certify that destruction in writing if requested.
+
+7. DISCLAIMER OF WARRANTY
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. THE ENTIRE RISK AS
+   TO THE QUALITY, CORRECTNESS, AND PERFORMANCE OF THE SOFTWARE IS WITH YOU.
+
+8. LIMITATION OF LIABILITY
+
+   IN NO EVENT SHALL FLATRA TECH LTD, ITS AUTHOR, OR ITS CONTRIBUTORS BE
+   LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+   CONSEQUENTIAL DAMAGES (INCLUDING, WITHOUT LIMITATION, LOSS OF USE, DATA,
+   OR PROFITS; BUSINESS INTERRUPTION; OR PERSONAL INJURY) HOWEVER CAUSED AND
+   ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+   ARISING IN ANY WAY OUT OF THE USE OF THE SOFTWARE, EVEN IF ADVISED OF THE
+   POSSIBILITY OF SUCH DAMAGE.
+
+9. GENERAL
+
+   This licence constitutes the entire agreement between the parties with
+   respect to the Software and supersedes any prior agreement or
+   understanding. If any provision is held unenforceable, the remainder
+   continues in full force.
+
+   Contact for licensing enquiries:
+     Clinton Iwoloma — The Imaginr, CEO, Flatra Tech Ltd
+     Flatra Tech Ltd
+     Email: clinton@flatratech.com
+     Telephone: +2349025975247

@@ -12,14 +12,10 @@ supabase/.env*
 !env/app.example.json
 
 # ---- Credential stores / keystores ----
-*.jks
-*.keystore
 *.p12
 *.pem
 *.key
 *.mobileprovision
-android/key.properties
-android/app/keystore.properties
 ios/Runner/GoogleService-Info.plist
 .android/
 .shorebird/secrets.json
@@ -75,6 +71,18 @@ shorebird_cache/
 *.njsproj
 *.sln
 *.iml
+
+# ---- Obfuscation symbols (outside the repo by default) ----
+build/symbols/
+build/debug-info/
+*.symbols/
+*.map
+
+# ---- Android signing ----
+key.properties
+*.jks
+*.keystore
+upload-keystore.jks
 
 # ---- Build outputs ----
 *.apk

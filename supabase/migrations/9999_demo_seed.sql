@@ -1,3 +1,7 @@
+-- © Flatra Tech Ltd. All rights reserved.
+-- Designed and developed by Clinton Iwoloma — The Imaginr, CEO, Flatra Tech Ltd.
+-- Proprietary and confidential. Unauthorized copying, modification, distribution or reuse is prohibited.
+-- Contact: +2349025975247
 insert into public.depots (id, code, name, city, region, latitude, longitude) values
   ('11111111-1111-1111-1111-111111111111', 'KAM', 'Kampala Yard', 'Kampala', 'Central', 0.3136, 32.5811),
   ('22222222-2222-2222-2222-222222222222', 'EBB', 'Entebbe Depot', 'Entebbe', 'Central', 0.047, 32.4561),

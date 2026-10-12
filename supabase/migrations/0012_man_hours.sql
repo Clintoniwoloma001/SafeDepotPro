@@ -1,3 +1,7 @@
+-- © Flatra Tech Ltd. All rights reserved.
+-- Designed and developed by Clinton Iwoloma — The Imaginr, CEO, Flatra Tech Ltd.
+-- Proprietary and confidential. Unauthorized copying, modification, distribution or reuse is prohibited.
+-- Contact: +2349025975247
 -- 0012_man_hours.sql — monthly man-hour records per depot with TRIR/LTIFR computation.
 
 create table public.man_hours (

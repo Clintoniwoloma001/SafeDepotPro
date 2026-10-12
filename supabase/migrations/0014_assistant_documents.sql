@@ -1,3 +1,7 @@
+-- © Flatra Tech Ltd. All rights reserved.
+-- Designed and developed by Clinton Iwoloma — The Imaginr, CEO, Flatra Tech Ltd.
+-- Proprietary and confidential. Unauthorized copying, modification, distribution or reuse is prohibited.
+-- Contact: +2349025975247
 -- 0014_assistant_documents.sql — RAG knowledge-base catalogue used by the AI Copilot.
 
 create table public.assistant_documents (

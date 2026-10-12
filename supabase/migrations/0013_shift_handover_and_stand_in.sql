@@ -1,3 +1,7 @@
+-- © Flatra Tech Ltd. All rights reserved.
+-- Designed and developed by Clinton Iwoloma — The Imaginr, CEO, Flatra Tech Ltd.
+-- Proprietary and confidential. Unauthorized copying, modification, distribution or reuse is prohibited.
+-- Contact: +2349025975247
 -- 0013_shift_handover_and_stand_in.sql — shift handovers + stand-in coverage.
 
 create table public.shift_handovers (

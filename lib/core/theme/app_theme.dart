@@ -1,3 +1,7 @@
+// © Flatra Tech Ltd. All rights reserved.
+// Designed and developed by Clinton Iwoloma — The Imaginr, CEO, Flatra Tech Ltd.
+// Proprietary and confidential. Unauthorized copying, modification, distribution or reuse is prohibited.
+// Contact: +2349025975247
 import 'package:flutter/material.dart';
 
 import 'app_colors.dart';
@@ -12,9 +16,19 @@ abstract final class AppTheme {
   static ThemeData get dark => _build(Brightness.dark);
 
   static ThemeData _build(Brightness brightness) {
+    // Seed from the shield red but force the primary surface to that exact
+    // colour: seeding alone yields a harmonised tint that drifts from the icon.
     final scheme = ColorScheme.fromSeed(
       seedColor: AppColors.brandLight,
       brightness: brightness,
+      primary: AppColors.brandLight,
+      onPrimary: AppColors.onBrandLight,
+      primaryContainer: brightness == Brightness.light
+          ? AppColors.brandContainerLight
+          : const Color(0xFF8C1D18),
+      onPrimaryContainer: brightness == Brightness.light
+          ? AppColors.onBrandContainerLight
+          : const Color(0xFFFFDAD6),
     );
     final base = ThemeData(
       colorScheme: scheme,

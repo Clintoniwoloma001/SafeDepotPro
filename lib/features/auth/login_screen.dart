@@ -1,6 +1,13 @@
+// © Flatra Tech Ltd. All rights reserved.
+// Designed and developed by Clinton Iwoloma — The Imaginr, CEO, Flatra Tech Ltd.
+// Proprietary and confidential. Unauthorized copying, modification, distribution or reuse is prohibited.
+// Contact: +2349025975247
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/branding/app_logo.dart';
+import '../../core/branding/build_integrity.dart';
+import '../../core/branding/credit_footer.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../providers/providers.dart';
 import '../shared/ui_kit.dart';
@@ -40,6 +47,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       _error = null;
     });
 
+    // Integrity call site 2 of 3. Re-checked here rather than only at startup
+    // because an attacker who disables the startup guard must not gain a path
+    // through the login button. The About page (call site 3) reports the same
+    // verdict to the user.
+    final integrity = await BuildIntegrity.evaluate();
+    if (!integrity.isUntampered && mounted) {
+      setState(() {
+        _submitting = false;
+        _error = 'This build failed its integrity check and cannot sign in. '
+            'See About for details.';
+      });
+      return;
+    }
+
     final result = await ref.read(authRepositoryProvider).signInWithPassword(
           email: _email.text,
           password: _password.text,
@@ -63,17 +84,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
-            child: Form(
+      body: Column(
+        children: [
+          Expanded(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 420),
+                  child: Form(
               key: _formKey,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  const Center(child: AppLogo(size: 88)),
+                  const SizedBox(height: 18),
                   const SizedBox(height: 24),
                   Text(
                     'SafeDepot Pro',
@@ -148,11 +174,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     textAlign: TextAlign.center,
                   ),
-                ],
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
         ),
+        const CreditFooter(),
+        ],
       ),
     );
   }

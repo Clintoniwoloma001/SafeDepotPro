@@ -8,6 +8,28 @@ Shorebird.
 
 ---
 
+## Proprietary software
+
+**© Flatra Tech Ltd. All rights reserved.**
+
+Designed and developed by **Clinton Iwoloma — The Imaginr, CEO, Flatra Tech
+Ltd.** This software is proprietary and confidential. Unauthorized copying,
+modification, distribution or reuse is prohibited.
+
+For more jobs and automation workflows contact **+2349025975247**.
+
+Every source file in this repository carries that copyright header. The header
+is added mechanically, so it cannot drift:
+
+```sh
+dart run tool/add_headers.dart           # add any missing headers
+dart run tool/add_headers.dart --check   # fail if any are missing (CI/hook)
+```
+
+See [LICENSE](LICENSE), [NOTICE](NOTICE) and [AUTHORS](AUTHORS).
+
+---
+
 ## Repository layout
 
 ```

@@ -1,0 +1,65 @@
+// © Flatra Tech Ltd. All rights reserved.
+// Designed and developed by Clinton Iwoloma — The Imaginr, CEO, Flatra Tech Ltd.
+// Proprietary and confidential. Unauthorized copying, modification, distribution or reuse is prohibited.
+// Contact: +2349025975247
+
+NOTICE
+
+SafeDepot Pro
+Copyright (c) 2026 Flatra Tech Ltd. All rights reserved.
+
+This product is the proprietary software of Flatra Tech Ltd.
+
+SafeDepot Pro — Designed and developed by Clinton Iwoloma, The Imaginr, CEO,
+Flatra Tech Ltd.
+
+For more jobs and automation workflows contact +2349025975247.
+
+
+COMPONENTS AND THIRD-PARTY SOFTWARE
+-----------------------------------
+
+This product includes or interacts with third-party open-source components.
+Each component remains the property of its respective authors and is used
+under the terms of its own licence. They are not covered by the proprietary
+licence above.
+
+Flutter and the Dart SDK
+    Copyright 2014 The Flutter Authors. BSD 3-Clause Licence.
+    https://github.com/flutter/flutter/blob/main/LICENSE
+
+The following Dart packages are dependencies of this application and are
+distributed under their respective licences (MIT unless otherwise noted):
+
+    flutter_riverpod, riverpod        - MIT
+    go_router                          - Apache 2.0
+    supabase_flutter, supabase         - MIT
+    flutter_secure_storage            - BSD 3-Clause
+    image_picker                       - BSD 3-Clause
+    connectivity_plus                  - Apache 2.0
+    path_provider                      - BSD 3-Clause
+    intl                               - BSD 3-Clause
+    uuid                               - MIT
+    crypto                             - BSD 3-Clause
+    package_info_plus                  - BSD 3-Clause
+    meta                               - BSD 3-Clause
+
+Supabase
+    PostgreSQL, PostgREST, GoTrue, Realtime, Storage, and the Supabase
+    platform are used as the backend. Apache 2.0 and PostgreSQL licences
+    apply respectively.
+
+Shorebird
+    Used for over-the-air Dart code push. Apache 2.0.
+    https://github.com/shorebirdtech/shorebird
+
+Material Design icons
+    Apache 2.0. Copyright The Material Design Authors.
+
+
+ATTRIBUTION REQUIREMENT
+-----------------------
+
+The credit notice "Made by ImaginirCo-Flatra" and the About page in this
+application are material parts of the licence and must not be removed. See
+section 4 (ATTRIBUTION) of the LICENSE file.

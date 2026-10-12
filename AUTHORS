@@ -1,0 +1,45 @@
+// © Flatra Tech Ltd. All rights reserved.
+// Designed and developed by Clinton Iwoloma — The Imaginr, CEO, Flatra Tech Ltd.
+// Proprietary and confidential. Unauthorized copying, modification, distribution or reuse is prohibited.
+// Contact: +2349025975247
+
+AUTHORS
+=======
+
+SafeDepot Pro — Depot safety and workflow management.
+
+
+PROJECT LEAD AND AUTHOR
+-----------------------
+
+    Clinton Iwoloma
+    The Imaginr, CEO
+    Flatra Tech Ltd
+    Email: clinton@flatratech.com
+    Telephone: +2349025975247
+
+
+OWNER
+-----
+
+    Flatra Tech Ltd
+    Proprietary and confidential software. All rights reserved.
+
+
+CREDITS
+-------
+
+    Made by ImaginirCo-Flatra
+
+
+ACKNOWLEDGEMENTS
+----------------
+
+SafeDepot Pro is built on the Flutter framework and the Dart SDK
+(BSD 3-Clause, The Flutter Authors), Supabase for authentication, database,
+row-level security, storage and edge functions, and Shorebird for over-the-air
+Dart code push. See the NOTICE file for the full list.
+
+The domain model in supabase/migrations/ was originally developed for an
+earlier web implementation of SafeDepot Pro; that implementation is preserved
+in the legacy/ directory of this repository.

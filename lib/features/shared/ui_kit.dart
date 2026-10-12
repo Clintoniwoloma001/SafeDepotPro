@@ -1,3 +1,7 @@
+// © Flatra Tech Ltd. All rights reserved.
+// Designed and developed by Clinton Iwoloma — The Imaginr, CEO, Flatra Tech Ltd.
+// Proprietary and confidential. Unauthorized copying, modification, distribution or reuse is prohibited.
+// Contact: +2349025975247
 /// Every data-driven screen renders one of these four states. The app never
 /// shows a bare spinner with no explanation, and never shows an empty list
 /// without saying what would fill it.

@@ -1,3 +1,7 @@
+// © Flatra Tech Ltd. All rights reserved.
+// Designed and developed by Clinton Iwoloma — The Imaginr, CEO, Flatra Tech Ltd.
+// Proprietary and confidential. Unauthorized copying, modification, distribution or reuse is prohibited.
+// Contact: +2349025975247
 import 'package:flutter/material.dart';
 
 /// Semantic colour tokens for SafeDepot Pro.
@@ -5,10 +9,13 @@ import 'package:flutter/material.dart';
 /// Values are stored as raw integers rather than [Color] constants so that the
 /// theme can rebuild [ColorScheme] instances without a [BuildContext].
 abstract final class AppColors {
-  // Brand — deep industrial blue.
-  static const Color brandLight = Color(0xFF12395B);
-  static const Color brandContainerLight = Color(0xFFD3E4F6);
-  static const Color onBrandContainerLight = Color(0xFF001E33);
+  // Brand — the SafeDepot Pro shield red, sampled from the launcher icon
+  // artwork in assets/branding/. The whole app's scheme is derived from this
+  // seed so the icon, the splash screen and the UI read as one brand.
+  static const Color brandLight = Color(0xFFF60711);
+  static const Color onBrandLight = Color(0xFFFFFFFF);
+  static const Color brandContainerLight = Color(0xFFFFE3E1);
+  static const Color onBrandContainerLight = Color(0xFF410005);
 
   // Status colours are shared across light and dark so that a "critical"
   // item reads identically in both modes.

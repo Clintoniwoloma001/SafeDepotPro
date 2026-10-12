@@ -1,3 +1,7 @@
+// © Flatra Tech Ltd. All rights reserved.
+// Designed and developed by Clinton Iwoloma — The Imaginr, CEO, Flatra Tech Ltd.
+// Proprietary and confidential. Unauthorized copying, modification, distribution or reuse is prohibited.
+// Contact: +2349025975247
 /// Typed models for SafeDepot Pro.
 ///
 /// Every field name matches its PostgreSQL column name exactly. The JSON keys
