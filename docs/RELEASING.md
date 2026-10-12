@@ -256,3 +256,52 @@ written with the service role.
      Designed and developed by Clinton Iwoloma — The Imaginr, CEO, Flatra Tech Ltd.
      Proprietary and confidential. Unauthorized copying, modification, distribution or reuse is prohibited.
      Contact: +2349025975247 -->
+
+---
+
+## 9. Launcher icon and splash
+
+Source of truth: `assets/branding/logo_source.webp` (the owner's shield mark).
+Generated from it, all committed:
+
+| File | Purpose |
+|---|---|
+| `icon_master.png` | 1024×1024 LANCZOS upscale; every other icon downscales from this rather than upscaling from the 160px source |
+| `ic_launcher_foreground.png` | adaptive foreground, inset to 62% so the launcher mask cannot crop it |
+| `ic_launcher_background.png` | adaptive background, flat shield red |
+| `ic_launcher_legacy.png` | pre-Android-8 square fallback |
+| `launch_image.png` | splash logo |
+
+Installed into `android/app/src/main/res/`:
+
+- `mipmap-anydpi-v26/ic_launcher.xml` — the `<adaptive-icon>`, in `anydpi-v26`
+  and **not** in the density folders. Putting it next to `ic_launcher.png` in
+  the same folder is a duplicate-resource build error.
+- `mipmap-{mdpi..xxxhdpi}/ic_launcher_background.png` + `ic_launcher_foreground.png`
+- `mipmap-{mdpi..xxxhdpi}/ic_launcher.png` — the legacy bitmap fallback
+- `mipmap-{mdpi..xxxhdpi}/launch_image.png`
+- `values/colors.xml` + `values-night/colors.xml` — `safedepot_brand_red`
+
+Two rules that are easy to get wrong:
+
+1. The adaptive XML must reference `@mipmap/…`, not `@drawable/…`, because the
+   layers live in `mipmap-*`.
+2. Adaptive layers cannot share a resource name with the legacy bitmap in the
+   same directory.
+
+### Replacing the icon
+
+Copy the new source over `assets/branding/logo_source.webp`, then re-run the
+generation in `assets/branding/` and reinstall into `res/`. Then **build a new
+release** — see §6, an icon is an Android resource and no patch can carry it.
+
+In-app the logo is `AppLogo` in `lib/core/branding/app_logo.dart`, a
+`CustomPainter` rather than a bitmap, so it stays sharp at any size and adapts
+to the theme without an image dependency.
+
+---
+
+<!-- © Flatra Tech Ltd. All rights reserved.
+     Designed and developed by Clinton Iwoloma — The Imaginr, CEO, Flatra Tech Ltd.
+     Proprietary and confidential. Unauthorized copying, modification, distribution or reuse is prohibited.
+     Contact: +2349025975247 -->
