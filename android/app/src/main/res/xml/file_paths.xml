@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <external-files-path name="exports" path="exports/" />
+    <cache-path name="shared_pdfs" path="shared/" />
+    <cache-path name="shared_media" path="media/" />
+    <files-path name="app_documents" path="documents/" />
+</paths>

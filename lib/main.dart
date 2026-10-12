@@ -2,6 +2,7 @@
 // Designed and developed by Clinton Iwoloma — The Imaginr, CEO, Flatra Tech Ltd.
 // Proprietary and confidential. Unauthorized copying, modification, distribution or reuse is prohibited.
 // Contact: +2349025975247
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -23,8 +24,8 @@ Future<void> main() async {
       MaterialApp(
         title: 'SafeDepot Pro',
         debugShowCheckedModeBanner: false,
-        theme: AppTheme.light,
-        darkTheme: AppTheme.dark,
+        theme: buildLightTheme(),
+        darkTheme: buildDarkTheme(),
         home: ConfigErrorScreen(missing: EnvConfig.missingHints),
       ),
     );
@@ -36,52 +37,49 @@ Future<void> main() async {
     publishableKey: EnvConfig.supabasePublishableKey,
   );
 
-  // Integrity call site 1 of 3.
+  // Integrity call site 1 of 3 (see build_integrity.dart).
   //
-  // A release build compiled without --dart-define=AUTHOR_HASH=… is treated as
-  // unverified: an absent manifest must never read as a pass. Debug builds
-  // also lack it, so this gate is enforced only in release (see build_integrity).
+  // A build compiled without AUTHOR_HASH is treated as unverified in release:
+  // an absent manifest must never read as a pass. Debug builds have no manifest
+  // to compare against, so they are allowed through with a note.
   final integrity = await BuildIntegrity.evaluate();
-  final isUntampered = integrity.isUntampered;
+  final blockedReason = BuildIntegrity.startupBlockReason(integrity);
 
   runApp(
     ProviderScope(
-      child: SafeDepotApp(startBlocked: !isUntampered, blockedReason: integrity.firstFailure),
+      child: SafeDepotApp(blockedReason: blockedReason),
     ),
   );
 }
 
 class SafeDepotApp extends ConsumerWidget {
-  const SafeDepotApp({super.key, required this.startBlocked, this.blockedReason});
+  const SafeDepotApp({super.key, this.blockedReason});
 
-  /// When true the app never reaches the router; the lock screen is shown
-  /// instead. Set at startup when the authorship hash did not verify.
-  final bool startBlocked;
+  /// Non-null when the integrity check failed; the app renders the lock screen
+  /// instead of the router, so the whole app is inert.
   final String? blockedReason;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (startBlocked) {
-      // Deliberately no ProviderScope override: with no session there is
-      // nothing to protect, and blocking here keeps the whole app inert.
+    final themes = ref.watch(appThemeProvider);
+
+    if (blockedReason != null) {
+      // No router, no session: with no session there is nothing to protect.
       return MaterialApp(
         title: 'SafeDepot Pro',
         debugShowCheckedModeBanner: false,
-        theme: AppTheme.light,
-        darkTheme: AppTheme.dark,
-        home: UnofficialBuildScreen(
-          reason: blockedReason ??
-              'The authorship manifest for this build could not be verified.',
-        ),
+        theme: themes.light,
+        darkTheme: themes.dark,
+        home: UnofficialBuildScreen(reason: blockedReason!),
       );
     }
 
     return MaterialApp.router(
       title: 'SafeDepot Pro',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
-      darkTheme: AppTheme.dark,
-      themeMode: ThemeMode.system,
+      theme: themes.light,
+      darkTheme: themes.dark,
+      themeMode: themes.mode,
       routerConfig: ref.watch(routerProvider),
     );
   }

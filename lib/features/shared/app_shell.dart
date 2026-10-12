@@ -2,19 +2,26 @@
 // Designed and developed by Clinton Iwoloma — The Imaginr, CEO, Flatra Tech Ltd.
 // Proprietary and confidential. Unauthorized copying, modification, distribution or reuse is prohibited.
 // Contact: +2349025975247
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/router/routes.dart';
+import '../../core/theme/tokens.dart';
 import '../../data/models/enums.dart';
+import '../../providers/feature_flags_provider.dart';
 import '../../providers/providers.dart';
 
-/// Navigation rail / drawer wrapper.
+/// Navigation shell.
 ///
-/// Destinations are filtered by role so an inspector never sees admin-only
-/// destinations, and item counts (unread notifications, pending approvals)
-/// are surfaced as badges.
+/// Five slots, one-line labels: Home | Tasks | [+] | Safety | More. The centre
+/// is an action, not a destination, which is why it is a raised circle and not
+/// a tab — it opens the quick-action sheet instead of navigating away.
+///
+/// Wide layouts use a rail so the same destinations are reachable without the
+/// bottom bar stealing vertical space from a dashboard full of KPI cards.
 class AppShell extends ConsumerWidget {
   const AppShell({super.key, required this.child});
 
@@ -26,196 +33,155 @@ class AppShell extends ConsumerWidget {
     if (profile == null) return child;
 
     final width = MediaQuery.sizeOf(context).width;
-    final isCompact = width < 700;
+    final useRail = width >= 840;
 
-    final destinations = _destinationsFor(profile.role);
-    final location = GoRouterState.of(context).matchedLocation;
-    final selectedIndex = destinations.indexWhere((d) => d.matches(location));
-    final index = selectedIndex < 0 ? 0 : selectedIndex;
-    final unread = ref.watch(unreadCountProvider).value ?? 0;
-
-    if (isCompact) {
-      return Scaffold(
-        body: child,
-        bottomNavigationBar: NavigationBar(
-          selectedIndex: index,
-          onDestinationSelected: (i) => _go(context, destinations[i].location),
-          destinations: [
-            for (final d in destinations)
-              NavigationDestination(
-                icon: _Leading(dest: d, badge: d.location == Routes.notifications ? unread : null),
-                label: d.label,
-              ),
-          ],
-        ),
+    if (useRail) {
+      return Row(
+        children: [
+          _AppRail(role: profile.role),
+          const VerticalDivider(width: 1),
+          Expanded(child: child),
+        ],
       );
     }
 
     return Scaffold(
-      body: Row(
-        children: [
-          NavigationRail(
-            selectedIndex: index,
-            onDestinationSelected: (i) => _go(context, destinations[i].location),
-            labelType: NavigationRailLabelType.all,
-            leading: const Padding(
-              padding: EdgeInsets.symmetric(vertical: 12),
-              child: FlutterLogo(size: 28),
-            ),
-            destinations: [
-              for (final d in destinations)
-                NavigationRailDestination(
-                  icon: _Leading(dest: d, badge: d.location == Routes.notifications ? unread : null),
-                  label: Text(d.label),
-                ),
-            ],
-          ),
-          const VerticalDivider(width: 1),
-          Expanded(child: child),
-        ],
-      ),
+      body: child,
+      bottomNavigationBar: _AppBottomBar(role: profile.role),
     );
   }
-
-  void _go(BuildContext context, String location) => context.go(location);
 }
 
-class _Leading extends StatelessWidget {
-  const _Leading({required this.dest, this.badge});
+/// The five primary destinations.
+enum _Primary { home, tasks, safety, more }
 
-  final _Destination dest;
-  final int? badge;
+const _primaryDestinations = <_Primary, ({IconData icon, IconData active, String label, String path, String match})>{
+  _Primary.home: (
+    icon: Icons.home_outlined,
+    active: Icons.home_rounded,
+    label: 'Home',
+    path: Routes.home,
+    match: '/',
+  ),
+  _Primary.tasks: (
+    icon: Icons.check_circle_outline,
+    active: Icons.check_circle_rounded,
+    label: 'Tasks',
+    path: '/tasks',
+    match: '/tasks',
+  ),
+  _Primary.safety: (
+    icon: Icons.shield_outlined,
+    active: Icons.shield_rounded,
+    label: 'Safety',
+    path: Routes.permits,
+    match: '/permits',
+  ),
+  _Primary.more: (
+    icon: Icons.menu_rounded,
+    active: Icons.menu_rounded,
+    label: 'More',
+    path: '/more',
+    match: '/more',
+  ),
+};
 
-  @override
-  Widget build(BuildContext context) {
-    final icon = Icon(dest.icon);
-    if (badge == null || badge! <= 0) return icon;
-    return Badge.count(count: badge!, child: icon);
-  }
-}
+class _AppBottomBar extends StatelessWidget {
+  const _AppBottomBar({required this.role});
 
-class _Destination {
-  const _Destination({
-    required this.location,
-    required this.label,
-    required this.icon,
-    required this.matches,
-  });
-
-  final String location;
-  final String label;
-  final IconData icon;
-  final bool Function(String loc) matches;
-}
-
-/// Role-filtered destinations. Admin destinations are not just hidden — the
-/// routes themselves also check the role, so a deep link is not a bypass.
-List<_Destination> _destinationsFor(UserRole role) {
-  final base = [
-    _Destination(
-      location: Routes.home,
-      label: 'Home',
-      icon: Icons.dashboard_outlined,
-      matches: (l) => l == Routes.home,
-    ),
-    _Destination(
-      location: Routes.inspections,
-      label: 'Inspections',
-      icon: Icons.checklist_outlined,
-      matches: (l) => l.startsWith('/inspections'),
-    ),
-    _Destination(
-      location: Routes.incidents,
-      label: 'Incidents',
-      icon: Icons.report_gmailerrorred_outlined,
-      matches: (l) => l.startsWith('/incidents'),
-    ),
-    _Destination(
-      location: Routes.capa,
-      label: 'Actions',
-      icon: Icons.task_outlined,
-      matches: (l) => l.startsWith('/corrective-actions'),
-    ),
-  ];
-
-  if (role.isAdmin) {
-    base.add(
-      _Destination(
-        location: Routes.permits,
-        label: 'Permits',
-        icon: Icons.approval_outlined,
-        matches: (l) => l.startsWith('/permits'),
-      ),
-    );
-    base.add(
-      _Destination(
-        location: Routes.audit,
-        label: 'Audit',
-        icon: Icons.history_outlined,
-        matches: (l) => l == Routes.audit,
-      ),
-    );
-  }
-
-  base.add(
-    _Destination(
-      location: Routes.notifications,
-      label: 'Alerts',
-      icon: Icons.notifications_outlined,
-      matches: (l) => l == Routes.notifications,
-    ),
-  );
-  base.add(
-    _Destination(
-      location: Routes.profile,
-      label: 'Profile',
-      icon: Icons.person_outline,
-      matches: (l) => l == Routes.profile,
-    ),
-  );
-  return base;
-}
-
-/// Convenience wrapper so routes that require admin can reject a deep link
-/// from a non-admin session without rendering the underlying screen.
-class RoleGuard extends ConsumerWidget {
-  const RoleGuard({super.key, required this.child, required this.allowed});
-
-  final Widget child;
-  final bool Function(UserRole role) allowed;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final role = ref.watch(profileProvider).profile?.role;
-    if (role == null) return const SizedBox.shrink();
-    if (!allowed(role)) return const ForbiddenView();
-    return child;
-  }
-}
-
-class ForbiddenView extends StatelessWidget {
-  const ForbiddenView({super.key});
+  final UserRole role;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
+    final location = GoRouterState.of(context).matchedLocation;
+
+    return SafeArea(
+      top: false,
+      child: Container(
+        height: 68,
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          border: Border(top: BorderSide(color: theme.colorScheme.outline)),
+        ),
+        child: Row(
+          children: [
+            for (final dest in [_Primary.home, _Primary.tasks]) ...[
+              _Slot(dest: dest, isActive: _isActive(dest, location)),
+              const Spacer(),
+            ],
+            _CentreAction(role: role),
+            const Spacer(),
+            for (final dest in [_Primary.safety, _Primary.more]) ...[
+              _Slot(dest: dest, isActive: _isActive(dest, location)),
+              const Spacer(),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  bool _isActive(_Primary dest, String location) {
+    final match = _primaryDestinations[dest]!.match;
+    return location == match || location.startsWith('$match/');
+  }
+}
+
+/// A single bar slot. Label is [FittedBox]ed and single-line so "Inspections"
+/// can never wrap, even at 130% text scale.
+class _Slot extends StatelessWidget {
+  const _Slot({required this.dest, required this.isActive});
+
+  final _Primary dest;
+  final bool isActive;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.appColors;
+    final d = _primaryDestinations[dest]!;
+    final color = isActive ? colors.brandRed : theme.colorScheme.onSurfaceVariant;
+
+    return Expanded(
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.selectionClick();
+          context.go(d.path);
+        },
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.lock_outline, size: 40, color: theme.colorScheme.error),
-            const SizedBox(height: 16),
-            Text('Not available to your role', style: theme.textTheme.titleMedium),
-            const SizedBox(height: 8),
-            Text(
-              'This area is restricted by your role and depot assignment. '
-              'Ask an administrator if you need access.',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 180),
+              child: Icon(
+                isActive ? d.active : d.icon,
+                key: ValueKey(isActive),
+                color: color,
+                size: 22,
               ),
-              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 4),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                d.label,
+                maxLines: 1,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: color,
+                  fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                ),
+              ),
+            ),
+            const SizedBox(height: 2),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              height: 2,
+              width: isActive ? 18 : 0,
+              decoration: BoxDecoration(
+                color: colors.brandRed,
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
           ],
         ),
@@ -224,19 +190,225 @@ class ForbiddenView extends StatelessWidget {
   }
 }
 
-/// Sign-out control used in the dashboard app bar and the profile screen.
-class LogoutButton extends ConsumerWidget {
-  const LogoutButton({super.key});
+/// Raised centre action. Deliberately not a [NavigationDestination] — it opens
+/// a sheet, and a destination that navigates would break that expectation.
+class _CentreAction extends ConsumerWidget {
+  const _CentreAction({required this.role});
+
+  final UserRole role;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return TextButton.icon(
-      onPressed: () async {
-        await ref.read(profileProvider.notifier).signOut();
-        if (context.mounted) context.go(Routes.login);
+    final colors = Theme.of(context).appColors;
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.mediumImpact();
+        _openQuickActions(context, ref, role);
       },
-      icon: const Icon(Icons.logout, size: 18),
-      label: const Text('Sign out'),
+      child: Container(
+        width: 52,
+        height: 52,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(colors: colors.accentGradient),
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: colors.brandRed.withValues(alpha: 0.32),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: const Icon(Icons.add_rounded, color: Colors.white, size: 28),
+      ),
     );
+  }
+}
+
+/// Role-aware quick actions.
+class QuickAction {
+  const QuickAction({
+    required this.label,
+    required this.icon,
+    required this.route,
+    required this.flagKey,
+  });
+
+  final String label;
+  final IconData icon;
+  final String route;
+  final String flagKey;
+}
+
+const List<QuickAction> _quickActions = [
+  QuickAction(label: 'Report incident', icon: Icons.report_gmailerrorred_outlined, route: Routes.incidents, flagKey: 'incidents'),
+  QuickAction(label: 'Start inspection', icon: Icons.checklist_rtl_rounded, route: Routes.inspections, flagKey: 'inspections'),
+  QuickAction(label: 'Report hazard', icon: Icons.warning_amber_rounded, route: '/hazards', flagKey: 'hazards'),
+  QuickAction(label: 'Toolbox talk', icon: Icons.groups_outlined, route: '/toolbox', flagKey: 'toolbox_talks'),
+  QuickAction(label: 'Request permit', icon: Icons.approval_outlined, route: Routes.permits, flagKey: 'permits'),
+  QuickAction(label: 'Truck inspection', icon: Icons.local_shipping_outlined, route: '/truck-inspections', flagKey: 'truck_inspections'),
+  QuickAction(label: 'Shift handover', icon: Icons.swap_horiz_rounded, route: '/shift-handover', flagKey: 'shift_handover'),
+];
+
+void _openQuickActions(BuildContext context, WidgetRef ref, UserRole role) {
+  final enabled = ref.read(featureFlagsProvider).value ?? const <String>{};
+
+  showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    showDragHandle: true,
+    builder: (_) => SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppTokens.spaceLg,
+          0,
+          AppTokens.spaceLg,
+          AppTokens.spaceLg,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Quick action', style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: AppTokens.spaceXs),
+            Text(
+              'Anything not yet shipped shows a coming-soon card instead of a '
+              'broken screen.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: AppTokens.spaceLg),
+            GridView.count(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisCount: 3,
+              mainAxisSpacing: AppTokens.spaceMd,
+              crossAxisSpacing: AppTokens.spaceMd,
+              children: [
+                for (final action in _quickActions)
+                  _QuickActionTile(
+                    action: action,
+                    enabled: enabled.contains(action.flagKey),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+class _QuickActionTile extends StatelessWidget {
+  const _QuickActionTile({required this.action, required this.enabled});
+
+  final QuickAction action;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return InkWell(
+      onTap: () {
+        Navigator.of(context).pop();
+        context.push(action.route);
+      },
+      borderRadius: BorderRadius.circular(AppTokens.radiusMd),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: enabled
+                  ? theme.colorScheme.primaryContainer
+                  : theme.colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(AppTokens.radiusMd),
+            ),
+            child: Icon(
+              action.icon,
+              color: enabled
+                  ? theme.colorScheme.onPrimaryContainer
+                  : theme.colorScheme.outline,
+              size: 21,
+            ),
+          ),
+          const SizedBox(height: AppTokens.spaceSm),
+          FittedBox(
+            child: Text(
+              action.label,
+              maxLines: 2,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Navigation rail for tablets and wide windows.
+///
+/// Uses the brand mark in place of the Flutter logo, which is the teal circle
+/// that overlapped the dashboard title.
+class _AppRail extends ConsumerWidget {
+  const _AppRail({required this.role});
+
+  final UserRole role;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final colors = theme.appColors;
+    final location = GoRouterState.of(context).matchedLocation;
+
+    return NavigationRail(
+      selectedIndex: _indexFor(location),
+      onDestinationSelected: (i) {
+        HapticFeedback.selectionClick();
+        context.go(_primaryDestinations.entries.elementAt(i).value.path);
+      },
+      labelType: NavigationRailLabelType.all,
+      backgroundColor: theme.colorScheme.surface,
+      indicatorColor: colors.activeNavTint,
+      leading: Column(
+        children: [
+          const SizedBox(height: AppTokens.spaceMd),
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(colors: colors.accentGradient),
+              borderRadius: BorderRadius.circular(9),
+            ),
+            child: const Icon(Icons.shield_outlined, color: Colors.white, size: 20),
+          ),
+          const SizedBox(height: AppTokens.spaceSm),
+        ],
+      ),
+      destinations: [
+        for (final d in _primaryDestinations.values)
+          NavigationRailDestination(
+            icon: Icon(d.icon),
+            selectedIcon: Icon(d.active),
+            label: Text(d.label),
+          ),
+      ],
+    );
+  }
+
+  int _indexFor(String location) {
+    final l = location == '/' ? Routes.home : location;
+    var i = 0;
+    for (final entry in _primaryDestinations.entries) {
+      final match = entry.value.match;
+      if (l == match || l.startsWith('$match/')) return i;
+      i++;
+    }
+    return 0;
   }
 }

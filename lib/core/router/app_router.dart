@@ -20,6 +20,7 @@ import '../../features/permits/permits_screen.dart';
 import '../../features/profile/profile_screen.dart';
 import '../../features/audit/audit_screen.dart';
 import '../../features/shared/app_shell.dart';
+import '../../features/shared/components.dart';
 import 'routes.dart';
 
 /// The application router.
@@ -34,7 +35,7 @@ import 'routes.dart';
 /// broken control.
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
-    initialLocation: Routes.home,
+    initialLocation: Routes.splash,
     refreshListenable: ref.read(routerRefreshProvider),
     redirect: (context, state) {
       final profileState = ref.read(profileProvider);

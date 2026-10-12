@@ -23,10 +23,15 @@ if (keystorePropertiesFile.exists()) {
 
 android {
     namespace = "com.clintoniwoloma.safedepot_pro"
-    compileSdk = flutter.compileSdkVersion
+    // permission_handler_android and local_auth compile against API 37, so the
+    // project must target it rather than inheriting Flutter's default.
+    compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
+        // flutter_local_notifications uses java.time APIs that need core
+        // library desugaring to run on the minimum supported runtime.
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -89,6 +94,12 @@ val prepareObfuscationMapDir by tasks.registering {
 }
 tasks.matching { it.name.startsWith("pre") && it.name.endsWith("Build") }.configureEach {
     dependsOn(prepareObfuscationMapDir)
+}
+
+dependencies {
+    // Enables java.time on older Android runtimes, required by
+    // flutter_local_notifications.
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 }
 
 kotlin {

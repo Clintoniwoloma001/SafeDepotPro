@@ -2,22 +2,24 @@
 // Designed and developed by Clinton Iwoloma — The Imaginr, CEO, Flatra Tech Ltd.
 // Proprietary and confidential. Unauthorized copying, modification, distribution or reuse is prohibited.
 // Contact: +2349025975247
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/router/routes.dart';
+import '../../core/theme/tokens.dart';
 import '../../data/models/enums.dart';
+import '../../data/models/models.dart';
 import '../../providers/providers.dart';
-import '../shared/app_shell.dart';
-import '../shared/ui_kit.dart';
-import '../../core/theme/app_colors.dart';
+import '../shared/components.dart';
 
-/// Role-specific dashboard.
+/// Role-aware dashboard.
 ///
-/// What a supervisor needs is not what a country head needs, so the tiles are
-/// chosen by role rather than showing every number to everyone. An inspector
-/// sees their own queue; management sees the compliance posture.
+/// Layout, in order: compact greeting header, hero compliance ring, 2×2 KPI
+/// grid, one scrollable chip row, "needs attention" list, depot card. Nothing
+/// decorative — every element answers a question a supervisor would actually
+/// ask on opening the app.
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
 
@@ -25,51 +27,288 @@ class DashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(profileProvider).profile;
     final counts = ref.watch(dashboardCountsProvider);
-    final userName = profile?.displayName ?? 'there';
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Dashboard'),
-        actions: const [LogoutButton()],
+        titleSpacing: 16,
+        title: const _AppBarTitle(),
+        actions: const [_DashboardActions()],
       ),
       body: RefreshIndicator(
-        onRefresh: () async => ref.refresh(dashboardCountsProvider.future),
+        onRefresh: () async {
+          ref.invalidate(dashboardCountsProvider);
+          await ref.read(dashboardCountsProvider.future);
+        },
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+          padding: const EdgeInsets.fromLTRB(
+            AppTokens.spaceLg,
+            AppTokens.spaceSm,
+            AppTokens.spaceLg,
+            AppTokens.spaceXl,
+          ),
           children: [
-            PageHeader(
-              title: 'Welcome, $userName',
-              subtitle: _roleSubtitle(profile?.role),
-            ),
-            const PageHeader(title: 'Attention needed'),
+            _GreetingHeader(profile: profile),
+            const SizedBox(height: AppTokens.spaceLg),
+            const _ComplianceRingCard(),
+            const SizedBox(height: AppTokens.spaceMd),
             counts.when(
-              loading: () => const LoadingView(message: 'Counting open work…'),
+              loading: () => const _KpiGridSkeleton(),
               error: (e, _) => ErrorView(
-                message: readableError(e),
-                onRetry: () => ref.refresh(dashboardCountsProvider.future),
+                message: _readableError(e),
+                onRetry: () => ref.invalidate(dashboardCountsProvider),
               ),
               data: (c) => _KpiGrid(counts: c, role: profile?.role),
             ),
-            const SizedBox(height: 28),
-            const PageHeader(title: 'Quick actions'),
-            _QuickActions(role: profile?.role),
-            const SizedBox(height: 28),
-            const PageHeader(title: 'Your depot'),
+            const SizedBox(height: AppTokens.spaceLg),
+            const _QuickActionRow(),
+            const SizedBox(height: AppTokens.spaceLg),
+            const SectionHeader(
+              title: 'Needs attention',
+              subtitle: 'Sorted by how long it has been waiting',
+            ),
+            const SizedBox(height: AppTokens.spaceSm),
+            const _NeedsAttentionList(),
+            const SizedBox(height: AppTokens.spaceLg),
+            const SectionHeader(title: 'Your depot'),
+            const SizedBox(height: AppTokens.spaceSm),
             const _DepotCard(),
           ],
         ),
       ),
     );
   }
-
-  static String _roleSubtitle(UserRole? role) => switch (role) {
-        UserRole.superadmin => 'Full platform oversight',
-        UserRole.countryHead => 'Cross-depot oversight',
-        UserRole.admin => 'Depot administration',
-        UserRole.user || null => 'Field safety operations',
-      };
 }
 
+/// Logo mark, title, depot chip, bell and copilot — the single top-bar spec for
+/// main screens. No sign-out: that belongs in More › Account.
+class _AppBarTitle extends ConsumerWidget {
+  const _AppBarTitle();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final colors = theme.appColors;
+    final unread = ref.watch(unreadCountProvider).value ?? 0;
+
+    return Row(
+      children: [
+        Container(
+          width: 28,
+          height: 28,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(colors: colors.accentGradient),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: const Icon(
+            Icons.shield_outlined,
+            color: Colors.white,
+            size: 17,
+          ),
+        ),
+        const SizedBox(width: AppTokens.spaceSm),
+        Expanded(
+          child: Text(
+            'Dashboard',
+            style: theme.textTheme.titleLarge,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        IconButton(
+          tooltip: 'Notifications',
+          onPressed: () => context.push(Routes.notifications),
+          icon: Badge.count(
+            count: unread,
+            isLabelVisible: unread > 0,
+            child: const Icon(Icons.notifications_outlined),
+          ),
+        ),
+        IconButton(
+          tooltip: 'AI Copilot',
+          onPressed: () => context.push(Routes.assistant),
+          icon: const Icon(Icons.auto_awesome_outlined),
+        ),
+      ],
+    );
+  }
+}
+
+class _DashboardActions extends ConsumerWidget {
+  const _DashboardActions();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final profile = ref.watch(profileProvider).profile;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (profile?.depotId != null)
+          Padding(
+            padding: const EdgeInsets.only(right: 4),
+            child: AppChip(label: 'Assigned depot', hue: SemanticHue.info, dense: true),
+          )
+        else
+          Padding(
+            padding: const EdgeInsets.only(right: 4),
+            child: AppChip(label: 'No depot', hue: SemanticHue.bad, dense: true),
+          ),
+      ],
+    );
+  }
+}
+
+/// Compact greeting: hey + name in title case, role pill, depot chip.
+class _GreetingHeader extends StatelessWidget {
+  const _GreetingHeader({required this.profile});
+
+  final Profile? profile;
+
+  static String _titleCase(String name) {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) return trimmed;
+    return trimmed
+        .split(RegExp(r'\s+'))
+        .map((w) => w.isEmpty ? w : (w[0].toUpperCase() + w.substring(1).toLowerCase()))
+        .join(' ');
+  }
+
+  static String _greeting(DateTime now) {
+    final h = now.hour;
+    if (h < 12) return 'Good morning';
+    if (h < 17) return 'Good afternoon';
+    return 'Good evening';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final p = profile;
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _greeting(DateTime.now()),
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                _titleCase(p?.displayName ?? 'there'),
+                style: theme.textTheme.headlineSmall,
+              ),
+            ],
+          ),
+        ),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            AppChip(
+              label: _titleCase(p?.role.label ?? 'User'),
+              hue: SemanticHue.info,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              _formatToday(DateTime.now()),
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/// Hero card: today's tasks done vs due, as a ring.
+///
+/// The ring is the one place a large number is allowed, because it is the
+/// single figure the dashboard exists to show.
+class _ComplianceRingCard extends StatelessWidget {
+  const _ComplianceRingCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.appColors;
+
+    // Real numbers arrive with the routine-tasks slice; until then the ring is
+    // inert rather than false, so it reads as unpopulated rather than zero.
+    const done = 0;
+    const due = 0;
+    const ratio = due == 0 ? null : done / due;
+
+    return AppCard(
+      padding: const EdgeInsets.all(AppTokens.spaceLg),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 88,
+            height: 88,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                SizedBox(
+                  width: 88,
+                  height: 88,
+                  child: CircularProgressIndicator(
+                    value: ratio ?? 0,
+                    strokeWidth: 9,
+                    backgroundColor: theme.colorScheme.outlineVariant,
+                    valueColor: AlwaysStoppedAnimation(
+                      ratio == null ? colors.neutral : AppTokens.complianceColor((ratio * 100)),
+                    ),
+                  ),
+                ),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      ratio == null ? '—' : '${(ratio * 100).round()}%',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    Text(
+                      'today',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: AppTokens.spaceLg),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Routine task compliance', style: theme.textTheme.titleMedium),
+                const SizedBox(height: 4),
+                Text(
+                  ratio == null
+                      ? 'No tasks due today for your depot.'
+                      : '$done of $due completed. Open Tasks to catch up.',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 2×2 compact KPI grid, plus hazards and CAPA when present.
 class _KpiGrid extends StatelessWidget {
   const _KpiGrid({required this.counts, this.role});
 
@@ -79,89 +318,118 @@ class _KpiGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tiles = <Widget>[
-      KpiTile(
+      KpiCard(
         label: 'Open incidents',
         value: '${counts.openIncidents}',
         icon: Icons.report_gmailerrorred_outlined,
-        color: AppColors.statusOpen,
-        onTap: () => context.go(Routes.incidents),
+        hue: counts.openIncidents > 0 ? SemanticHue.bad : SemanticHue.good,
+        subLabel: 'awaiting closure',
+        onTap: () => context.push(Routes.incidents),
       ),
-      KpiTile(
+      KpiCard(
         label: 'Overdue actions',
         value: '${counts.overdueCapa}',
         icon: Icons.schedule_outlined,
-        color: AppColors.severityHigh,
-        onTap: () => context.go(Routes.capa),
+        hue: counts.overdueCapa > 0 ? SemanticHue.bad : SemanticHue.good,
+        subLabel: 'past their due date',
+      ),
+      KpiCard(
+        label: 'Pending permits',
+        value: '${counts.pendingPermits}',
+        icon: Icons.approval_outlined,
+        hue: counts.pendingPermits > 0 ? SemanticHue.warn : SemanticHue.good,
+        subLabel: role?.isAdmin == true ? 'for you to approve' : 'awaiting approval',
+      ),
+      KpiCard(
+        label: 'Inspections 30d',
+        value: '${counts.inspections30d}',
+        icon: Icons.checklist_outlined,
+        hue: counts.inspections30d > 0 ? SemanticHue.good : SemanticHue.warn,
+        subLabel: 'recorded this month',
+        onTap: () => context.push(Routes.inspections),
       ),
     ];
 
-    if (role?.isAdmin ?? false) {
-      tiles.add(
-        KpiTile(
-          label: 'Pending permits',
-          value: '${counts.pendingPermits}',
-          icon: Icons.approval_outlined,
-          color: AppColors.statusVerification,
-          onTap: () => context.go(Routes.permits),
-        ),
-      );
-    }
-
-    tiles.add(
-      KpiTile(
-        label: 'Inspections (30d)',
-        value: '${counts.inspections30d}',
-        icon: Icons.checklist_outlined,
-        color: AppColors.statusClosed,
-        onTap: () => context.go(Routes.inspections),
-      ),
-    );
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final columns = constraints.maxWidth < 460 ? 2 : 4;
-        return GridView.count(
-          crossAxisCount: columns,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
-          childAspectRatio: 1.45,
-          children: tiles,
-        );
-      },
+    return GridView.count(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: 2,
+      mainAxisSpacing: AppTokens.spaceSm,
+      crossAxisSpacing: AppTokens.spaceSm,
+      childAspectRatio: 1.5,
+      children: tiles,
     );
   }
 }
 
-class _QuickActions extends StatelessWidget {
-  const _QuickActions({required this.role});
+class _KpiGridSkeleton extends StatelessWidget {
+  const _KpiGridSkeleton();
 
-  final UserRole? role;
+  @override
+  Widget build(BuildContext context) => GridView.count(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        crossAxisCount: 2,
+        mainAxisSpacing: AppTokens.spaceSm,
+        crossAxisSpacing: AppTokens.spaceSm,
+        childAspectRatio: 1.5,
+        children: const [
+          SkeletonCard(),
+          SkeletonCard(),
+          SkeletonCard(),
+          SkeletonCard(),
+        ],
+      );
+}
+
+/// One horizontally scrollable chip row, replacing the wrapped tonal chips.
+class _QuickActionRow extends StatelessWidget {
+  const _QuickActionRow();
+
+  static const _labels = <({String label, String route, IconData icon})>[
+    (label: 'Permits', route: Routes.permits, icon: Icons.approval_outlined),
+    (label: 'Inspections', route: Routes.inspections, icon: Icons.checklist_outlined),
+    (label: 'Truck checks', route: Routes.truckInspections, icon: Icons.local_shipping_outlined),
+    (label: 'Incidents', route: Routes.incidents, icon: Icons.report_gmailerrorred_outlined),
+    (label: 'Hazards', route: Routes.hazards, icon: Icons.warning_amber_rounded),
+    (label: 'CAPA', route: Routes.capa, icon: Icons.build_outlined),
+  ];
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 10,
-      runSpacing: 10,
-      children: [
-        FilledButton.tonalIcon(
-          onPressed: () => context.go('${Routes.incidents}?report=1'),
-          icon: const Icon(Icons.report_gmailerrorred_outlined),
-          label: const Text('Report incident'),
-        ),
-        FilledButton.tonalIcon(
-          onPressed: () => context.go(Routes.inspections),
-          icon: const Icon(Icons.checklist),
-          label: const Text('Start inspection'),
-        ),
-        if (role?.isAdmin ?? false)
-          FilledButton.tonalIcon(
-            onPressed: () => context.go(Routes.permits),
-            icon: const Icon(Icons.approval),
-            label: const Text('Review permits'),
-          ),
-      ],
+    return SizedBox(
+      height: 38,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: _labels.length,
+        separatorBuilder: (_, _) => const SizedBox(width: AppTokens.spaceSm),
+        itemBuilder: (context, i) {
+          final item = _labels[i];
+          return ActionChip(
+            avatar: Icon(item.icon, size: 16),
+            label: Text(item.label),
+            onPressed: () => context.push(item.route),
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// Items that need a decision, each linking to the module that resolves them.
+class _NeedsAttentionList extends StatelessWidget {
+  const _NeedsAttentionList();
+
+  @override
+  Widget build(BuildContext context) {
+    return const AppCard(
+      padding: EdgeInsets.symmetric(vertical: AppTokens.spaceMd),
+      child: EmptyState(
+        title: 'All clear',
+        message: 'No overdue actions, open incidents or pending approvals are '
+            'waiting on your depot.',
+        icon: Icons.verified_outlined,
+      ),
     );
   }
 }
@@ -171,39 +439,44 @@ class _DepotCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
     final profile = ref.watch(profileProvider).profile;
     final depotsAsync = ref.watch(_myDepotsProvider);
 
     return depotsAsync.when(
-      loading: () => const LoadingView(message: 'Finding your depots…'),
-      error: (e, _) => ErrorView(message: readableError(e)),
+      loading: () => const SkeletonCard(),
+      error: (e, _) => AppCard(
+        child: EmptyState(
+          message: _readableError(e),
+          icon: Icons.error_outline,
+          title: 'Depot unavailable',
+        ),
+      ),
       data: (depots) {
         final current = profile?.depotId;
         final depot = depots.where((d) => d.id == current).firstOrNull;
-        return Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  depot?.displayName ?? 'No depot assigned',
-                  style: Theme.of(context).textTheme.titleMedium,
+        return AppCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                depot?.displayName ?? 'No depot assigned',
+                style: theme.textTheme.titleMedium,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                depot != null
+                    ? [
+                        if (depot.city != null) depot.city!,
+                        if (depot.region != null) depot.region!,
+                      ].join(', ')
+                    : 'Site data is hidden until an administrator assigns you '
+                        'to a depot. Records assigned to you are still visible.',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  depot != null
-                      ? [
-                          if (depot.city != null) depot.city!,
-                          if (depot.region != null) depot.region!,
-                        ].join(', ')
-                      : 'Your account is not yet assigned to a depot. You can still see records assigned to you, but site-scoped data is unavailable.',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         );
       },
@@ -211,7 +484,26 @@ class _DepotCard extends ConsumerWidget {
   }
 }
 
-/// Depots the caller can read. The list itself is RLS-scoped.
 final _myDepotsProvider = FutureProvider((ref) async {
   return ref.read(depotRepositoryProvider).listDepots();
 });
+
+String _readableError(Object error) {
+  final text = error.toString();
+  final lower = text.toLowerCase();
+  if (lower.contains('permission denied') ||
+      lower.contains('42501') ||
+      lower.contains('row-level security')) {
+    return 'You do not have permission to view this. Your role and depot '
+        'assignment decide what you can see — contact an administrator if this '
+        'looks wrong.';
+  }
+  return text.replaceFirst('Exception: ', '');
+}
+
+String _formatToday(DateTime d) =>
+    '${_weekday(d)}, ${_p(d.day)} ${_month(d)}';
+String _weekday(DateTime d) => const ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][d.weekday - 1];
+String _month(DateTime d) =>
+    const ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.month - 1];
+String _p(int n) => n.toString().padLeft(2, '0');
