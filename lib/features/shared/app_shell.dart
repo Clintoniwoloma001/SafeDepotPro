@@ -53,31 +53,67 @@ class AppShell extends ConsumerWidget {
 }
 
 /// The five primary destinations.
-enum _Primary { home, tasks, safety, more }
+enum BottomSlot { home, tasks, safety, more }
 
-const _primaryDestinations = <_Primary, ({IconData icon, IconData active, String label, String path, String match})>{
-  _Primary.home: (
+/// The bar's slots: four destinations plus a centre action.
+///
+/// Exposed so the shell's shape is testable without a Supabase session; the
+/// label and path of each slot are what the tests pin, and they must match the
+/// route catalog. The centre `[+]` is an action, not a destination, and is
+/// therefore absent from this list.
+const List<BottomSlotSpec> bottomSlots = [
+  BottomSlotSpec(slot: BottomSlot.home, label: 'Home', icon: 'home', path: Routes.home, match: Routes.home),
+  BottomSlotSpec(slot: BottomSlot.tasks, label: 'Tasks', icon: 'tasks', path: Routes.tasks, match: Routes.tasks),
+  BottomSlotSpec(slot: BottomSlot.safety, label: 'Safety', icon: 'safety', path: Routes.safety, match: Routes.permits),
+  BottomSlotSpec(slot: BottomSlot.more, label: 'More', icon: 'more', path: Routes.more, match: Routes.more),
+];
+
+/// One destination in the bottom bar. The centre `[+]` is an action and is
+/// deliberately absent from this list.
+class BottomSlotSpec {
+  const BottomSlotSpec({
+    required this.slot,
+    required this.label,
+    required this.icon,
+    required this.path,
+    required this.match,
+  });
+
+  final BottomSlot slot;
+  final String label;
+  final String icon;
+  final String path;
+  final String match;
+
+  /// The four destinations, in bar order. Used by the rail too, so the count
+  /// has one definition rather than two.
+  static const int destinationCount = 4;
+}
+
+
+const _primaryDestinations = <BottomSlot, ({IconData icon, IconData active, String label, String path, String match})>{
+  BottomSlot.home: (
     icon: Icons.home_outlined,
     active: Icons.home_rounded,
     label: 'Home',
     path: Routes.home,
     match: '/',
   ),
-  _Primary.tasks: (
+  BottomSlot.tasks: (
     icon: Icons.check_circle_outline,
     active: Icons.check_circle_rounded,
     label: 'Tasks',
     path: '/tasks',
     match: '/tasks',
   ),
-  _Primary.safety: (
+  BottomSlot.safety: (
     icon: Icons.shield_outlined,
     active: Icons.shield_rounded,
     label: 'Safety',
     path: Routes.permits,
     match: '/permits',
   ),
-  _Primary.more: (
+  BottomSlot.more: (
     icon: Icons.menu_rounded,
     active: Icons.menu_rounded,
     label: 'More',
@@ -106,13 +142,13 @@ class _AppBottomBar extends StatelessWidget {
         ),
         child: Row(
           children: [
-            for (final dest in [_Primary.home, _Primary.tasks]) ...[
+            for (final dest in [BottomSlot.home, BottomSlot.tasks]) ...[
               _Slot(dest: dest, isActive: _isActive(dest, location)),
               const Spacer(),
             ],
             _CentreAction(role: role),
             const Spacer(),
-            for (final dest in [_Primary.safety, _Primary.more]) ...[
+            for (final dest in [BottomSlot.safety, BottomSlot.more]) ...[
               _Slot(dest: dest, isActive: _isActive(dest, location)),
               const Spacer(),
             ],
@@ -122,7 +158,7 @@ class _AppBottomBar extends StatelessWidget {
     );
   }
 
-  bool _isActive(_Primary dest, String location) {
+  bool _isActive(BottomSlot dest, String location) {
     final match = _primaryDestinations[dest]!.match;
     return location == match || location.startsWith('$match/');
   }
@@ -133,7 +169,7 @@ class _AppBottomBar extends StatelessWidget {
 class _Slot extends StatelessWidget {
   const _Slot({required this.dest, required this.isActive});
 
-  final _Primary dest;
+  final BottomSlot dest;
   final bool isActive;
 
   @override

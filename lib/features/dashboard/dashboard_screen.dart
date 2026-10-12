@@ -489,8 +489,14 @@ final _myDepotsProvider = FutureProvider((ref) async {
 });
 
 String _readableError(Object error) {
-  final text = error.toString();
-  final lower = text.toLowerCase();
+  final lower = error.toString().toLowerCase();
+  if (lower.contains('failed host lookup') ||
+      lower.contains('socketexception') ||
+      lower.contains('network is unreachable') ||
+      lower.contains('no address associated')) {
+    return 'You appear to be offline. Changes made on this device are queued '
+        'and synchronise automatically when the connection returns.';
+  }
   if (lower.contains('permission denied') ||
       lower.contains('42501') ||
       lower.contains('row-level security')) {
@@ -498,7 +504,10 @@ String _readableError(Object error) {
         'assignment decide what you can see — contact an administrator if this '
         'looks wrong.';
   }
-  return text.replaceFirst('Exception: ', '');
+  if (lower.contains('timeout') || lower.contains('timed out')) {
+    return 'The server took too long to respond. Try again in a moment.';
+  }
+  return error.toString().replaceFirst('Exception: ', '');
 }
 
 String _formatToday(DateTime d) =>

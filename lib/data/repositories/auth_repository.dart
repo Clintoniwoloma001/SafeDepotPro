@@ -72,7 +72,27 @@ class AuthRepository {
     } on AuthException catch (e) {
       return AuthFailure(_authMessage(e));
     } catch (e) {
-      return AuthFailure('Unexpected error during sign-in: $e');
+      // A raw stack trace is useless on a depot floor with a flaky connection.
+      // The recoverable conditions are surfaced in plain language; anything
+      // genuinely unexpected keeps its text but loses the prefix noise.
+      final text = e.toString();
+      final lower = text.toLowerCase();
+      if (lower.contains('failed host lookup') ||
+          lower.contains('socketexception') ||
+          lower.contains('network is unreachable') ||
+          lower.contains('connection refused') ||
+          lower.contains('no address associated')) {
+        return const AuthFailure(
+          'Could not reach the server. Check your connection and try again — '
+          'any work already saved stays on this device.',
+        );
+      }
+      if (lower.contains('timeout') || lower.contains('timed out')) {
+        return const AuthFailure(
+          'The server took too long to respond. Try again in a moment.',
+        );
+      }
+      return AuthFailure('Sign-in failed: ${e.toString().replaceFirst('Exception: ', '')}');
     }
   }
 
