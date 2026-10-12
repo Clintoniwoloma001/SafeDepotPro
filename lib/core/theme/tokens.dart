@@ -84,6 +84,9 @@ abstract final class AppTokens {
   ];
 
   /// Foreground colours that stay AA-legible on the chips above.
+  ///
+  /// The dark chips are deep saturated tints (#0B3D20 and friends), not the
+  /// light pastels, so their text is near-white rather than dark.
   static const Color lightStatusChipText = Color(0xFF1A1A1A);
   static const Color darkStatusChipText = Color(0xFFF2F2F3);
 
@@ -212,6 +215,17 @@ class AppColorsExtension extends ThemeExtension<AppColorsExtension> {
   /// on dark, where contrast demands it.
   final Color brandRed;
 
+  /// Readable foreground for a semantic hue, for use as *text* rather than as a
+  /// chip fill. Distinct from `chipBackgrounds`, which are deliberately quiet
+  /// pastel surfaces: using a pastel as a text colour is invisible on white.
+  Color foreground(SemanticHue hue) => switch (hue) {
+        SemanticHue.good => good,
+        SemanticHue.warn => warn,
+        SemanticHue.bad => bad,
+        SemanticHue.info => info,
+        SemanticHue.neutral => neutral,
+      };
+
   static const light = AppColorsExtension(
     good: AppTokens.good,
     warn: AppTokens.warn,
@@ -227,14 +241,23 @@ class AppColorsExtension extends ThemeExtension<AppColorsExtension> {
 
   static const dark = AppColorsExtension(
     // On a near-black surface the saturated hues lose contrast, so the dark
-    // variant uses the lighter tints.
-    good: Color(0xFF5BD97A),
-    warn: Color(0xFFFFC14D),
-    bad: Color(0xFFFF8A80),
-    info: Color(0xFF8AB4F8),
-    neutral: Color(0xFFA0A0A8),
-    chipBackgrounds: AppTokens.darkStatusChips,
-    chipText: AppTokens.darkStatusChipText,
+    // variant uses the lighter tints. Each is bright enough to satisfy AA on
+    // the matching dark chip below it.
+    good: Color(0xFF6FE08A),
+    warn: Color(0xFFFFC659),
+    bad: Color(0xFFFF8F86),
+    info: Color(0xFF9CC4FF),
+    neutral: Color(0xFFB4B4BC),
+    // Deeper tints than the light pastels, so a chip still reads as coloured
+    // against a #1A1A1C card rather than blending into it.
+    chipBackgrounds: <Color>[
+      Color(0xFF0E4A24),
+      Color(0xFF5C3B00),
+      Color(0xFF5E1A17),
+      Color(0xFF1B3A78),
+      Color(0xFF33333A),
+    ],
+    chipText: Color(0xFFF2F2F3),
     accentGradient: AppTokens.accentGradient,
     activeNavTint: Color(0x33FF5252),
     brandRed: AppTokens.brandRedOnDark,

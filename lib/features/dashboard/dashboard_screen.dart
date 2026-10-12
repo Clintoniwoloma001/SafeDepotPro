@@ -167,7 +167,13 @@ class _GreetingHeader extends StatelessWidget {
     if (trimmed.isEmpty) return trimmed;
     return trimmed
         .split(RegExp(r'\s+'))
-        .map((w) => w.isEmpty ? w : (w[0].toUpperCase() + w.substring(1).toLowerCase()))
+        .map((word) {
+          if (word.isEmpty) return word;
+          // An all-caps word is an acronym (AIISM, DSO) and must stay caps;
+          // lower-casing "AIISM" into "Aiism" misnames the person.
+          if (word.length <= 6 && word == word.toUpperCase()) return word;
+          return word[0].toUpperCase() + word.substring(1).toLowerCase();
+        })
         .join(' ');
   }
 
@@ -234,7 +240,6 @@ class _ComplianceRingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colors = theme.appColors;
 
     // Real numbers arrive with the routine-tasks slice; until then the ring is
     // inert rather than false, so it reads as unpopulated rather than zero.
@@ -260,7 +265,11 @@ class _ComplianceRingCard extends StatelessWidget {
                     strokeWidth: 9,
                     backgroundColor: theme.colorScheme.outlineVariant,
                     valueColor: AlwaysStoppedAnimation(
-                      ratio == null ? colors.neutral : AppTokens.complianceColor((ratio * 100)),
+                      ratio == null
+                          // A ring with no data must read as "no data", not as
+                          // a green pass. Neutral grey is the honest colour.
+                          ? theme.colorScheme.outline
+                          : AppTokens.complianceColor((ratio * 100)),
                     ),
                   ),
                 ),

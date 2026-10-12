@@ -112,6 +112,8 @@ ThemeData buildLightTheme() => _base(
       ),
       background: AppTokens.lightBackground,
       ext: AppColorsExtension.light,
+      textPrimary: AppTokens.lightText,
+      textSecondary: AppTokens.lightTextSecondary,
     );
 
 ThemeData buildDarkTheme() => _base(
@@ -134,14 +136,21 @@ ThemeData buildDarkTheme() => _base(
       ),
       background: AppTokens.darkBackground,
       ext: AppColorsExtension.dark,
+      textPrimary: AppTokens.darkText,
+      textSecondary: AppTokens.darkTextSecondary,
     );
 
 ThemeData _base({
   required ColorScheme colorScheme,
   required Color background,
   required AppColorsExtension ext,
+  required Color textPrimary,
+  required Color textSecondary,
 }) {
-  final text = _textTheme;
+  // The scale is built per mode so every style carries an explicit colour.
+  // A TextTheme built without colours inherits an implicit one, which on a
+  // light scheme resolves to white and made the whole app illegible.
+  final text = _textTheme(textPrimary, textSecondary);
   final base = ThemeData(
     colorScheme: colorScheme,
     useMaterial3: true,
@@ -292,21 +301,25 @@ OutlineInputBorder _border(Color color, {double width = 1}) => OutlineInputBorde
       borderSide: BorderSide(color: color, width: width),
     );
 
-/// The pinned type scale.
+/// The pinned type scale, with colours.
 ///
-/// Line heights are set as multiples of the size rather than absolute pixels,
-/// so 130% text scaling does not clip descenders.
-final TextTheme _textTheme = const TextTheme(
-  displaySmall: TextStyle(fontSize: AppTokens.displaySmall, fontWeight: FontWeight.w800, height: 1.2),
-  headlineMedium: TextStyle(fontSize: AppTokens.headlineMedium, fontWeight: FontWeight.w700, height: 1.25),
-  headlineSmall: TextStyle(fontSize: AppTokens.headlineSmall, fontWeight: FontWeight.w700, height: 1.3),
-  titleLarge: TextStyle(fontSize: AppTokens.titleLarge, fontWeight: FontWeight.w700, height: 1.35),
-  titleMedium: TextStyle(fontSize: AppTokens.titleMedium, fontWeight: FontWeight.w600, height: 1.4),
-  titleSmall: TextStyle(fontSize: AppTokens.titleSmall, fontWeight: FontWeight.w600, height: 1.4),
-  bodyLarge: TextStyle(fontSize: AppTokens.bodyLarge, fontWeight: FontWeight.w400, height: 1.5),
-  bodyMedium: TextStyle(fontSize: AppTokens.bodyMedium, fontWeight: FontWeight.w400, height: 1.5),
-  bodySmall: TextStyle(fontSize: AppTokens.bodySmall, fontWeight: FontWeight.w400, height: 1.45),
-  labelLarge: TextStyle(fontSize: AppTokens.labelLarge, fontWeight: FontWeight.w600, height: 1.3),
-  labelMedium: TextStyle(fontSize: AppTokens.labelMedium, fontWeight: FontWeight.w500, height: 1.3),
-  labelSmall: TextStyle(fontSize: AppTokens.labelSmall, fontWeight: FontWeight.w500, height: 1.3),
-);
+/// Sizes and line heights are pinned so an inline tweak cannot silently break
+/// the hierarchy; line heights are multiples of the size so 130% text scaling
+/// does not clip descenders. Colour is explicit because a scale without it
+/// inherits the platform default, which is white on a light scheme.
+TextTheme _textTheme(Color primary, Color secondary) => TextTheme(
+      displaySmall: TextStyle(fontSize: AppTokens.displaySmall, fontWeight: FontWeight.w800, height: 1.2, color: primary),
+      headlineMedium: TextStyle(fontSize: AppTokens.headlineMedium, fontWeight: FontWeight.w700, height: 1.25, color: primary),
+      headlineSmall: TextStyle(fontSize: AppTokens.headlineSmall, fontWeight: FontWeight.w700, height: 1.3, color: primary),
+      titleLarge: TextStyle(fontSize: AppTokens.titleLarge, fontWeight: FontWeight.w700, height: 1.35, color: primary),
+      titleMedium: TextStyle(fontSize: AppTokens.titleMedium, fontWeight: FontWeight.w600, height: 1.4, color: primary),
+      titleSmall: TextStyle(fontSize: AppTokens.titleSmall, fontWeight: FontWeight.w600, height: 1.4, color: primary),
+      bodyLarge: TextStyle(fontSize: AppTokens.bodyLarge, fontWeight: FontWeight.w400, height: 1.5, color: primary),
+      bodyMedium: TextStyle(fontSize: AppTokens.bodyMedium, fontWeight: FontWeight.w400, height: 1.5, color: primary),
+      // Muted roles carry the secondary colour rather than being dimmed at the
+      // call site: one place to change, and contrast is decided once.
+      bodySmall: TextStyle(fontSize: AppTokens.bodySmall, fontWeight: FontWeight.w400, height: 1.45, color: secondary),
+      labelLarge: TextStyle(fontSize: AppTokens.labelLarge, fontWeight: FontWeight.w600, height: 1.3, color: primary),
+      labelMedium: TextStyle(fontSize: AppTokens.labelMedium, fontWeight: FontWeight.w500, height: 1.3, color: secondary),
+      labelSmall: TextStyle(fontSize: AppTokens.labelSmall, fontWeight: FontWeight.w500, height: 1.3, color: secondary),
+    );

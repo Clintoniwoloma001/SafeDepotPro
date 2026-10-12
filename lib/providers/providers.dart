@@ -10,6 +10,7 @@ import '../data/models/enums.dart';
 import '../data/models/models.dart';
 import '../data/models/workflows.dart';
 import '../data/repositories/audit_repository.dart';
+import '../data/repositories/routine_task_repository.dart';
 import '../data/repositories/auth_repository.dart';
 import '../data/repositories/capa_repository.dart';
 import '../data/repositories/depot_repository.dart';
@@ -28,24 +29,46 @@ final supabaseClientProvider = Provider<SupabaseClient>((ref) {
   return SupabaseService.client;
 });
 
-final authRepositoryProvider = Provider((ref) => AuthRepository(ref.watch(supabaseClientProvider)));
-final depotRepositoryProvider = Provider((ref) => DepotRepository(ref.watch(supabaseClientProvider)));
-final profileRepositoryProvider = Provider((ref) => ProfileRepository(ref.watch(supabaseClientProvider)));
-final incidentRepositoryProvider = Provider((ref) => IncidentRepository(ref.watch(supabaseClientProvider)));
-final capaRepositoryProvider = Provider((ref) => CapaRepository(ref.watch(supabaseClientProvider)));
-final inspectionRepositoryProvider = Provider((ref) => InspectionRepository(ref.watch(supabaseClientProvider)));
-final permitRepositoryProvider = Provider((ref) => PermitRepository(ref.watch(supabaseClientProvider)));
-final storageRepositoryProvider = Provider((ref) => StorageRepository(ref.watch(supabaseClientProvider)));
-final auditRepositoryProvider = Provider((ref) => AuditRepository(ref.watch(supabaseClientProvider)));
-final notificationRepositoryProvider = Provider((ref) => NotificationRepository(ref.watch(supabaseClientProvider)));
+final authRepositoryProvider = Provider(
+  (ref) => AuthRepository(ref.watch(supabaseClientProvider)),
+);
+final depotRepositoryProvider = Provider(
+  (ref) => DepotRepository(ref.watch(supabaseClientProvider)),
+);
+final profileRepositoryProvider = Provider(
+  (ref) => ProfileRepository(ref.watch(supabaseClientProvider)),
+);
+final incidentRepositoryProvider = Provider(
+  (ref) => IncidentRepository(ref.watch(supabaseClientProvider)),
+);
+final capaRepositoryProvider = Provider(
+  (ref) => CapaRepository(ref.watch(supabaseClientProvider)),
+);
+final inspectionRepositoryProvider = Provider(
+  (ref) => InspectionRepository(ref.watch(supabaseClientProvider)),
+);
+final permitRepositoryProvider = Provider(
+  (ref) => PermitRepository(ref.watch(supabaseClientProvider)),
+);
+final storageRepositoryProvider = Provider(
+  (ref) => StorageRepository(ref.watch(supabaseClientProvider)),
+);
+final auditRepositoryProvider = Provider(
+  (ref) => AuditRepository(ref.watch(supabaseClientProvider)),
+);
+final notificationRepositoryProvider = Provider(
+  (ref) => NotificationRepository(ref.watch(supabaseClientProvider)),
+);
+final routineTaskRepositoryProvider = Provider(
+  (ref) => RoutineTaskRepository(ref.watch(supabaseClientProvider)),
+);
+final truckRepositoryProvider = Provider(
+  (ref) => TruckRepository(ref.watch(supabaseClientProvider)),
+);
 
 /// Session state. Single source of truth for auth; drives the router redirect.
 class ProfileState {
-  const ProfileState._({
-    this.profile,
-    this.isLoading = false,
-    this.error,
-  });
+  const ProfileState._({this.profile, this.isLoading = false, this.error});
 
   const ProfileState.loading() : this._(isLoading: true);
 
@@ -62,7 +85,9 @@ class ProfileState {
   bool get isSignedIn => profile != null;
 }
 
-final profileProvider = NotifierProvider<ProfileNotifier, ProfileState>(ProfileNotifier.new);
+final profileProvider = NotifierProvider<ProfileNotifier, ProfileState>(
+  ProfileNotifier.new,
+);
 
 class ProfileNotifier extends Notifier<ProfileState> {
   @override
@@ -99,7 +124,9 @@ class ProfileNotifier extends Notifier<ProfileState> {
       return;
     }
     final profile = await repo.restoreSession();
-    state = profile == null ? const ProfileState.signedOut() : ProfileState.ready(profile);
+    state = profile == null
+        ? const ProfileState.signedOut()
+        : ProfileState.ready(profile);
   }
 
   /// Adopt the profile loaded by a successful sign-in.
@@ -171,7 +198,9 @@ final dashboardCountsProvider = FutureProvider<DashboardCounts>((ref) async {
 
   // Server-side status filter rather than fetching a wide window and filtering
   // locally: the open list is small, and it keeps the count honest.
-  final openIncidents = await incidents.listIncidents(status: IncidentStatus.open);
+  final openIncidents = await incidents.listIncidents(
+    status: IncidentStatus.open,
+  );
   final results = await Future.wait([
     capa.listCapa(),
     permits.listPermits(),
@@ -187,6 +216,8 @@ final dashboardCountsProvider = FutureProvider<DashboardCounts>((ref) async {
     openIncidents: openIncidents.where((i) => i.status.isActive).length,
     overdueCapa: capaAll.where((c) => c.isOverdue).length,
     pendingPermits: permitsAll.where((p) => p.status.isPending).length,
-    inspections30d: inspectionsAll.where((i) => i.createdAt.isAfter(cutoff)).length,
+    inspections30d: inspectionsAll
+        .where((i) => i.createdAt.isAfter(cutoff))
+        .length,
   );
 });

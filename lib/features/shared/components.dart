@@ -13,6 +13,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/branding/app_logo.dart';
 import '../../core/branding/author_info.dart';
 import '../../providers/feature_flags_provider.dart';
 import '../../providers/providers.dart';
@@ -88,11 +89,19 @@ class KpiCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.appColors;
+    // Two different colours, deliberately.
+    //
+    // The icon tile keeps the quiet pastel surface; the icon and the value take
+    // the readable foreground for the same hue. These used to be the same
+    // colour, which rendered the number as a near-white pastel on a white card
+    // and made the whole KPI grid read as blank.
     final chipBg = hue == null
         ? theme.colorScheme.surfaceContainerHighest
-        : colors.chipBackgrounds[hue!.index];
-    final chipFg = chipBg;
-    final valueColor = hue == null ? theme.colorScheme.onSurface : chipFg;
+        : colors.chipBackgrounds[hue!.ordinal];
+    final chipFg = hue == null
+        ? theme.colorScheme.onSurfaceVariant
+        : colors.foreground(hue!);
+    final valueColor = chipFg;
 
     return AppCard(
       onTap: onTap,
@@ -910,5 +919,131 @@ class ComingSoonCard extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+/// A full-screen "not yet built" state.
+///
+/// Every route whose module has not shipped yet renders one of these rather
+/// than falling through to the router's error builder, which produced a blank
+/// white screen. The UX contract is: the user always sees why something is
+/// missing and what will happen next.
+class ComingSoonScreen extends StatelessWidget {
+  const ComingSoonScreen({
+    super.key,
+    required this.title,
+    this.message,
+    this.icon = Icons.rocket_launch_outlined,
+  });
+
+  /// The screen a route whose module has not shipped yet. Read its flag and
+  /// render child once enabled; that is the mechanism by which a Dart patch
+  /// switches a module on without a reinstall.
+  static Widget gated({
+    required String flagKey,
+    required String title,
+    required Widget child,
+    String? message,
+  }) =>
+      GatedModuleScreen(
+        flagKey: flagKey,
+        title: title,
+        message: message,
+        child: child,
+      );
+
+  final String title;
+  final String? message;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Scaffold(
+      appBar: AppBar(title: Text(title)),
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(AppTokens.spaceLg),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AppLogo(size: 88),
+                const SizedBox(height: AppTokens.spaceLg),
+                Text(title, style: theme.textTheme.headlineSmall, textAlign: TextAlign.center),
+                const SizedBox(height: AppTokens.spaceSm),
+                Text(
+                  message ??
+                      'This module is not in this release yet. It arrives in an '
+                      'update and switches on automatically — no reinstall '
+                      'needed.',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodyMedium,
+                ),
+                const SizedBox(height: AppTokens.spaceLg),
+                AppCard(
+                  child: Column(
+                    children: [
+                      Text(
+                        'Designed and developed by Clinton Iwoloma — '
+                        'The Imaginr, CEO, Flatra Tech Ltd.',
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.bodySmall,
+                      ),
+                      const SizedBox(height: AppTokens.spaceSm),
+                      // On its own line so the number never wraps mid-digit.
+                      Text(
+                        'For more jobs and automation workflows contact '
+                        '+2349025975247.',
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppTokens.spaceMd),
+                Text(
+                  kCreditLine,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The gated variant: shows the module once its flag is on, otherwise the
+/// coming-soon screen. This is what makes a patch able to switch a module on
+/// with no reinstall.
+class GatedModuleScreen extends ConsumerWidget {
+  const GatedModuleScreen({
+    super.key,
+    required this.flagKey,
+    required this.title,
+    required this.child,
+    this.message,
+  });
+
+  final String flagKey;
+  final String title;
+  final Widget child;
+  final String? message;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final flags = ref.watch(featureFlagsProvider);
+    final enabled = flags.value?.contains(flagKey) ?? false;
+    if (!enabled) {
+      return ComingSoonScreen(title: title, message: message);
+    }
+    return child;
   }
 }

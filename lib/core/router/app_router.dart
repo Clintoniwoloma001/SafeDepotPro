@@ -19,8 +19,12 @@ import '../../features/notifications/notifications_screen.dart';
 import '../../features/permits/permits_screen.dart';
 import '../../features/profile/profile_screen.dart';
 import '../../features/audit/audit_screen.dart';
+import '../../features/tasks/tasks_screen.dart';
 import '../../features/shared/app_shell.dart';
 import '../../features/shared/components.dart';
+import '../../features/shared/flutter_splash.dart';
+import '../../features/more/more_screen.dart';
+import '../../features/settings/appearance_screen.dart';
 import 'routes.dart';
 
 /// The application router.
@@ -49,6 +53,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
+      // The splash owns its own routing, so the auth guard must not redirect
+      // it. Kept outside the shell so it never sees the navigation rail.
+      GoRoute(
+        path: Routes.splash,
+        builder: (context, state) => const FlutterSplash(),
+      ),
       GoRoute(
         path: Routes.login,
         builder: (context, state) => const LoginScreen(),
@@ -111,6 +121,169 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: Routes.about,
             builder: (context, state) => const AboutScreen(),
           ),
+          // ---- Tasks (P2) ------------------------------------------------
+          GoRoute(
+            path: Routes.tasks,
+            builder: (context, state) => ComingSoonScreen.gated(
+              flagKey: 'routine_tasks',
+              title: 'Routine Tasks',
+              child: const TasksScreen(),
+            ),
+          ),
+
+          // ---- Safety tab grid (P3) ---------------------------------------
+          GoRoute(
+            path: Routes.hazards,
+            builder: (context, state) => ComingSoonScreen.gated(
+              flagKey: 'hazards',
+              title: 'Hazards',
+              child: const _Placeholder('Hazards'),
+            ),
+          ),
+          GoRoute(
+            path: Routes.truckInspections,
+            builder: (context, state) => ComingSoonScreen.gated(
+              flagKey: 'truck_inspections',
+              title: 'Truck Inspections',
+              child: const _Placeholder('Truck Inspections'),
+            ),
+          ),
+
+          // ---- Operations (P2/P4) ------------------------------------------
+          GoRoute(
+            path: Routes.toolbox,
+            builder: (context, state) => ComingSoonScreen.gated(
+              flagKey: 'toolbox_talks',
+              title: 'Toolbox Talks',
+              child: const _Placeholder('Toolbox Talks'),
+            ),
+          ),
+          GoRoute(
+            path: Routes.handover,
+            builder: (context, state) => ComingSoonScreen.gated(
+              flagKey: 'shift_handover',
+              title: 'Shift Handover',
+              child: const _Placeholder('Shift Handover'),
+            ),
+          ),
+          GoRoute(
+            path: Routes.manHours,
+            builder: (context, state) => ComingSoonScreen.gated(
+              flagKey: 'man_hours',
+              title: 'Man-Hours',
+              child: const _Placeholder('Man-Hours'),
+            ),
+          ),
+
+          // ---- Assets (P5) -------------------------------------------------
+          GoRoute(
+            path: Routes.assets,
+            builder: (context, state) => ComingSoonScreen.gated(
+              flagKey: 'assets',
+              title: 'Equipment & Assets',
+              child: const _Placeholder('Assets'),
+            ),
+          ),
+
+          // ---- Admin, role-gated -------------------------------------------
+          GoRoute(
+            path: Routes.personnel,
+            builder: (context, state) => RoleGuard(
+              allowed: (r) => r.isAdmin,
+              child: ComingSoonScreen.gated(
+                flagKey: 'personnel',
+                title: 'Personnel',
+                child: const _Placeholder('Personnel'),
+              ),
+            ),
+          ),
+          GoRoute(
+            path: Routes.depots,
+            builder: (context, state) => RoleGuard(
+              allowed: (r) => r.isAdmin,
+              child: ComingSoonScreen.gated(
+                flagKey: 'depots',
+                title: 'Depots',
+                child: const _Placeholder('Depots'),
+              ),
+            ),
+          ),
+          GoRoute(
+            path: Routes.checklistBuilder,
+            builder: (context, state) => RoleGuard(
+              allowed: (r) => r.isAdmin,
+              child: ComingSoonScreen.gated(
+                flagKey: 'checklist_builder',
+                title: 'Checklist Builder',
+                child: const _Placeholder('Checklist Builder'),
+              ),
+            ),
+          ),
+          GoRoute(
+            path: Routes.standIn,
+            builder: (context, state) => RoleGuard(
+              allowed: (r) => r.isAdmin,
+              child: ComingSoonScreen.gated(
+                flagKey: 'stand_in',
+                title: 'DSO Stand-In',
+                child: const _Placeholder('DSO Stand-In'),
+              ),
+            ),
+          ),
+          GoRoute(
+            path: Routes.settings,
+            builder: (context, state) => RoleGuard(
+              allowed: (r) => r.isAdmin,
+              child: ComingSoonScreen.gated(
+                flagKey: 'settings',
+                title: 'Settings',
+                child: const _Placeholder('Settings'),
+              ),
+            ),
+          ),
+          GoRoute(
+            path: Routes.userManagement,
+            builder: (context, state) => RoleGuard(
+              allowed: (r) => r.seesAllDepots,
+              child: ComingSoonScreen.gated(
+                flagKey: 'user_management',
+                title: 'User Management',
+                message: 'Only a super admin may manage accounts.',
+                child: const _Placeholder('User Management'),
+              ),
+            ),
+          ),
+          GoRoute(
+            path: Routes.platformExport,
+            builder: (context, state) => RoleGuard(
+              allowed: (r) => r.seesAllDepots,
+              child: ComingSoonScreen.gated(
+                flagKey: 'platform_export',
+                title: 'Platform Export',
+                message: 'Only a country head or super admin may export.',
+                child: const _Placeholder('Platform Export'),
+              ),
+            ),
+          ),
+
+          // ---- More tab extras ----------------------------------------------
+          GoRoute(
+            path: Routes.appearance,
+            builder: (context, state) => const AppearanceScreen(),
+          ),
+          GoRoute(
+            path: Routes.assistant,
+            builder: (context, state) => ComingSoonScreen.gated(
+              flagKey: 'ai_copilot',
+              title: 'AI Copilot',
+              child: const _Placeholder('AI Copilot'),
+            ),
+          ),
+          GoRoute(
+            path: Routes.more,
+            builder: (context, state) => const MoreScreen(),
+          ),
+
         ],
       ),
     ],
@@ -128,5 +301,24 @@ class _NotFoundScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Scaffold(
         body: Center(child: Text('Route not found: $location')),
+      );
+}
+
+/// Stand-in for a module that is not yet built.
+///
+/// Only ever rendered once its feature flag is on, which means the Dart code
+/// has shipped but the screen has not been written. Keeping it distinct from
+/// ComingSoonScreen makes that case obvious rather than silently identical.
+class _Placeholder extends StatelessWidget {
+  const _Placeholder(this.name);
+
+  final String name;
+
+  @override
+  Widget build(BuildContext context) => ComingSoonScreen(
+        title: name,
+        message:
+            'This module is enabled for your account but its screens have not '
+            'shipped yet. They arrive in an update and switch on automatically.',
       );
 }
