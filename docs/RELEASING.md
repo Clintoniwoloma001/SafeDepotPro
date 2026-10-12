@@ -305,3 +305,85 @@ to the theme without an image dependency.
      Designed and developed by Clinton Iwoloma — The Imaginr, CEO, Flatra Tech Ltd.
      Proprietary and confidential. Unauthorized copying, modification, distribution or reuse is prohibited.
      Contact: +2349025975247 -->
+
+---
+
+## 10. Patch versus release — the decision rule
+
+A **patch** replaces the Dart AOT snapshot and nothing else. It is OTA, fast, and
+requires no reinstall.
+
+A **release** is a new APK. It requires the user to install it, which loses
+nothing but takes a step they must take.
+
+| Change | Patch | Release |
+|---|---|---|
+| Dart-only feature code | yes | |
+| Editing a string, theme value, or route | yes | |
+| Enabling a module via a feature flag | yes | |
+| New Flutter plugin | | yes |
+| New Android permission | | yes |
+| `AndroidManifest.xml`, `build.gradle.kts`, `proguard-rules.pro` | | yes |
+| Launcher icon, splash, notification icon | | yes |
+| New asset in `pubspec.yaml` | | yes |
+| Flutter or plugin **version** bump | | yes |
+| `ios/` anything | | yes |
+| Dart-to-native method-channel surface | | yes |
+
+The reliable test: **if the change requires `flutter clean` to take effect on a
+previously built tree, a patch will not carry it.**
+
+### Build number
+
+`pubspec.yaml` carries `x.y.z+b`. The rules:
+
+- **`b` strictly increases, never reused.** Play and Shorebird both treat it as
+  the monotonic artifact counter. Reusing a build number produces a patch that
+  looks like a no-op.
+- **`x.y.z` is what the user sees.** Announce meaningful changes only.
+- The version in `app_builds` must be bumped **in the same change**: the
+  server-side gate rejects an unregistered version with reason
+  `unknown build`, which locks the app out.
+- Sequence used so far: `1.0.0+1` → `1.1.0+2` (icon) → `2.0.0+3` (redesign,
+  native-complete).
+
+### Feature-flag releases
+
+A flag-gated module can be shipped **disabled** in a release and switched on
+later by an UPDATE on `feature_flags`, because the Dart code for it is already
+in the installed snapshot. That is only true if the module's Dart code shipped
+in an earlier patch or release — a flag cannot conjure code that is not there.
+
+## 11. Revoking a release
+
+Two levers, both in `app_builds`, both requiring the service role (the app
+cannot write either):
+
+- **Revoke a specific build** — `status = 'REVOKED'`. `assert_build_allowed`
+  answers `allowed=false` with reason `build revoked` on the next app start.
+- **Kill every older build** — set `min_supported_build` on the newest row, or
+  raise an old row's own `min_supported_version` to the new version. Every
+  installed build below it is refused, app-wide, immediately.
+
+Both are logged to `build_assertions`, so a revoked build's activity can be
+reconstructed afterwards. There is no client path to undo either.
+
+## 12. Rollback via patch
+
+Shorebird keeps every patch addressable, so a bad patch is reverted by
+publishing another patch:
+
+```sh
+# Revert the bad patch
+git revert <bad-commit>
+
+# Republish for the same release
+shorebird patch android \
+  --release-version=<affected version> \
+  --split-debug-info=build/symbols-patch \
+  --dart-define-from-file=env/app.json
+```
+
+This is safe only while the build's Dart snapshot is compatible; a native change
+in between means the patch cannot be reapplied to the older release.
+

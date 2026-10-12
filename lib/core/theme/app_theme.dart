@@ -30,10 +30,10 @@ class ThemePreferenceNotifier extends Notifier<ThemePreference> {
     return ThemePreference.system;
   }
 
-  static const _key = 'theme_preference';
+  static const storageKey = 'theme_preference';
 
   void _restore(SharedPreferences prefs) {
-    final stored = prefs.getString(_key);
+    final stored = prefs.getString(storageKey);
     if (stored == null) return;
     state = ThemePreference.values.firstWhere(
       (v) => v.name == stored,
@@ -44,7 +44,7 @@ class ThemePreferenceNotifier extends Notifier<ThemePreference> {
   Future<void> set(ThemePreference value) async {
     state = value;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_key, value.name);
+    await prefs.setString(storageKey, value.name);
   }
 
   /// Cycles system → light → dark → system, for a control that has no label
@@ -79,14 +79,17 @@ final appThemeProvider = Provider<AppThemeState>((ref) {
   return AppThemeState(
     light: buildLightTheme(),
     dark: buildDarkTheme(),
-    mode: switch (preference) {
-      ThemePreference.system => ThemeMode.system,
-      ThemePreference.light => ThemeMode.light,
-      ThemePreference.dark => ThemeMode.dark,
-    },
+    mode: modeFor(preference),
     preference: preference,
   );
 });
+
+/// Maps the persisted preference to a [ThemeMode].
+ThemeMode modeFor(ThemePreference preference) => switch (preference) {
+      ThemePreference.system => ThemeMode.system,
+      ThemePreference.light => ThemeMode.light,
+      ThemePreference.dark => ThemeMode.dark,
+    };
 
 /// Builds the light theme from tokens. Never seeds from a Material colour.
 ThemeData buildLightTheme() => _base(
