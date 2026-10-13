@@ -92,7 +92,9 @@ class AuthRepository {
           'The server took too long to respond. Try again in a moment.',
         );
       }
-      return AuthFailure('Sign-in failed: ${e.toString().replaceFirst('Exception: ', '')}');
+      return AuthFailure(
+        'Sign-in failed: ${e.toString().replaceFirst('Exception: ', '')}',
+      );
     }
   }
 
@@ -105,7 +107,11 @@ class AuthRepository {
   /// half-provisioned account.
   Future<Profile?> fetchProfile(String userId) async {
     try {
-      final row = await _client.from(profilesTable).select().eq('id', userId).maybeSingle();
+      final row = await _client
+          .from(profilesTable)
+          .select()
+          .eq('id', userId)
+          .maybeSingle();
       if (row == null) return null;
       return Profile.fromJson(row);
     } catch (_) {

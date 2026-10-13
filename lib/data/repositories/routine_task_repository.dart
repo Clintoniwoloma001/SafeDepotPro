@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/enums.dart';
 import '../models/ops_models.dart';
+import '../models/workflows.dart';
 
 /// Reads routine tasks.
 ///
@@ -87,3 +88,162 @@ class TruckRepository {
 /// Small helper so `order` can take a computed column name.
 String isOrderableColumn({required String table, required String column}) =>
     column;
+
+/// Reads and writes shift handovers, man-hours records, and truck inspections.
+class OpsRepository {
+  OpsRepository(this._client);
+
+  final SupabaseClient _client;
+
+  // -- Shift handovers ------------------------------------------------
+
+  Future<List<ShiftHandover>> listShiftHandovers({
+    String? depotId,
+    int limit = 100,
+  }) async {
+    var query = _client.from('shift_handovers').select();
+    if (depotId != null) query = query.eq('depot_id', depotId);
+    final rows = await query.order('created_at', ascending: false).limit(limit);
+    return rows.map<ShiftHandover>(ShiftHandover.fromJson).toList(growable: false);
+  }
+
+  Future<ShiftHandover> createShiftHandover({
+    required String depotId,
+    required String shift,
+    required String date,
+    String? outgoingUserId,
+    String? incomingUserId,
+    String? summary,
+    List<String> pendingIssues = const [],
+    String? equipmentNotes,
+    String? signatureOutgoing,
+    String? signatureIncoming,
+  }) async {
+    final row = await _client
+        .from('shift_handovers')
+        .insert({
+          'depot_id': depotId,
+          'shift': shift,
+          'date': date,
+          'outgoing_user_id': outgoingUserId,
+          'incoming_user_id': incomingUserId,
+          'summary': summary,
+          'pending_issues': pendingIssues,
+          'equipment_notes': equipmentNotes,
+          'signature_outgoing': signatureOutgoing,
+          'signature_incoming': signatureIncoming,
+        })
+        .select()
+        .single();
+    return ShiftHandover.fromJson(row);
+  }
+
+  Future<void> updateShiftHandover({
+    required String id,
+    String? summary,
+    List<String>? pendingIssues,
+    String? equipmentNotes,
+    String? signatureOutgoing,
+    String? signatureIncoming,
+  }) async {
+    final updates = <String, dynamic>{};
+    if (summary != null) updates['summary'] = summary;
+    if (pendingIssues != null) updates['pending_issues'] = pendingIssues;
+    if (equipmentNotes != null) updates['equipment_notes'] = equipmentNotes;
+    if (signatureOutgoing != null) {
+      updates['signature_outgoing'] = signatureOutgoing;
+    }
+    if (signatureIncoming != null) {
+      updates['signature_incoming'] = signatureIncoming;
+    }
+    if (updates.isNotEmpty) {
+      updates['status'] = ShiftStatus.confirmed.wire;
+      updates['confirmed_at'] = DateTime.now().toUtc().toIso8601String();
+      await _client.from('shift_handovers').update(updates).eq('id', id);
+    }
+  }
+
+  // -- Man hours -------------------------------------------------------
+
+  Future<List<ManHours>> listManHours({
+    String? depotId,
+    int limit = 100,
+  }) async {
+    var query = _client.from('man_hours').select();
+    if (depotId != null) query = query.eq('depot_id', depotId);
+    final rows = await query.order('period_start', ascending: false).limit(limit);
+    return rows.map<ManHours>(ManHours.fromJson).toList(growable: false);
+  }
+
+  Future<ManHours> createManHours({
+    required String depotId,
+    required DateTime periodStart,
+    DateTime? periodEnd,
+    double hoursWorked = 0,
+    double overtimeHours = 0,
+    int headcount = 0,
+    int recordableIncidents = 0,
+    int lostTimeIncidents = 0,
+    int nearMisses = 0,
+  }) async {
+    final row = await _client
+        .from('man_hours')
+        .insert({
+          'depot_id': depotId,
+          'period_start': periodStart.toIso8601String(),
+          'period_end': periodEnd?.toIso8601String(),
+          'hours_worked': hoursWorked,
+          'overtime_hours': overtimeHours,
+          'headcount': headcount,
+          'recordable_incidents': recordableIncidents,
+          'lost_time_incidents': lostTimeIncidents,
+          'near_misses': nearMisses,
+        })
+        .select()
+        .single();
+    return ManHours.fromJson(row);
+  }
+
+  // -- Truck inspections -----------------------------------------------
+
+  Future<List<TruckInspection>> listTruckInspections({
+    String? depotId,
+    int limit = 100,
+  }) async {
+    var query = _client.from('truck_inspections').select();
+    if (depotId != null) query = query.eq('depot_id', depotId);
+    final rows = await query.order('created_at', ascending: false).limit(limit);
+    return rows
+        .map<TruckInspection>(TruckInspection.fromJson)
+        .toList(growable: false);
+  }
+
+  Future<TruckInspection> recordTruckInspection({
+    required String truckId,
+    required String depotId,
+    required String inspectedBy,
+    required TruckResult result,
+    String? notes,
+    List<String> photoPaths = const [],
+    double? latitude,
+    double? longitude,
+    String? signaturePath,
+  }) async {
+    final row = await _client
+        .from('truck_inspections')
+        .insert({
+          'truck_id': truckId,
+          'depot_id': depotId,
+          'inspected_by': inspectedBy,
+          'result': result.wire,
+          'notes': notes,
+          'photo_paths': photoPaths,
+          'latitude': latitude,
+          'longitude': longitude,
+          'signature_path': signaturePath,
+        })
+        .select()
+        .single();
+    return TruckInspection.fromJson(row);
+  }
+}

@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../data/models/enums.dart';
 import '../data/models/models.dart';
+import '../data/models/ops_models.dart';
 import '../data/models/workflows.dart';
 import '../data/repositories/audit_repository.dart';
 import '../data/repositories/routine_task_repository.dart';
@@ -65,6 +66,37 @@ final routineTaskRepositoryProvider = Provider(
 final truckRepositoryProvider = Provider(
   (ref) => TruckRepository(ref.watch(supabaseClientProvider)),
 );
+final opsRepositoryProvider = Provider(
+  (ref) => OpsRepository(ref.watch(supabaseClientProvider)),
+);
+
+/// Trucks visible to the signed-in user's depot.
+final trucksProvider = FutureProvider<List<Truck>>((ref) async {
+  final profile = ref.watch(profileProvider).profile;
+  if (profile?.depotId == null) return const [];
+  return ref.read(truckRepositoryProvider).listTrucks(depotId: profile!.depotId);
+});
+
+/// Shift handovers for the signed-in user's depot.
+final shiftHandoversProvider = FutureProvider<List<ShiftHandover>>((ref) async {
+  final profile = ref.watch(profileProvider).profile;
+  if (profile?.depotId == null) return const [];
+  return ref.read(opsRepositoryProvider).listShiftHandovers(depotId: profile!.depotId);
+});
+
+/// Man-hours records for the signed-in user's depot.
+final manHoursProvider = FutureProvider<List<ManHours>>((ref) async {
+  final profile = ref.watch(profileProvider).profile;
+  if (profile?.depotId == null) return const [];
+  return ref.read(opsRepositoryProvider).listManHours(depotId: profile!.depotId);
+});
+
+/// Recent truck inspections for the signed-in user's depot.
+final truckInspectionsProvider = FutureProvider<List<TruckInspection>>((ref) async {
+  final profile = ref.watch(profileProvider).profile;
+  if (profile?.depotId == null) return const [];
+  return ref.read(opsRepositoryProvider).listTruckInspections(depotId: profile!.depotId);
+});
 
 /// Session state. Single source of truth for auth; drives the router redirect.
 class ProfileState {

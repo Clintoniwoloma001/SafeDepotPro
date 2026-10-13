@@ -37,29 +37,29 @@ class OutboxEntry {
   final String? lastError;
 
   factory OutboxEntry.fromJson(Map<String, dynamic> j) => OutboxEntry(
-        id: j['id'] as String,
-        idempotencyKey: j['idempotency_key'] as String,
-        table: j['table'] as String,
-        operation: OutboxOperation.values.firstWhere(
-          (o) => o.wire == j['operation'],
-          orElse: () => OutboxOperation.insert,
-        ),
-        payload: Map<String, dynamic>.from(j['payload'] as Map),
-        createdAt: DateTime.parse(j['created_at'] as String),
-        attempts: (j['attempts'] as num?)?.toInt() ?? 0,
-        lastError: j['last_error'] as String?,
-      );
+    id: j['id'] as String,
+    idempotencyKey: j['idempotency_key'] as String,
+    table: j['table'] as String,
+    operation: OutboxOperation.values.firstWhere(
+      (o) => o.wire == j['operation'],
+      orElse: () => OutboxOperation.insert,
+    ),
+    payload: Map<String, dynamic>.from(j['payload'] as Map),
+    createdAt: DateTime.parse(j['created_at'] as String),
+    attempts: (j['attempts'] as num?)?.toInt() ?? 0,
+    lastError: j['last_error'] as String?,
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'idempotency_key': idempotencyKey,
-        'table': table,
-        'operation': operation.wire,
-        'payload': payload,
-        'created_at': createdAt.toIso8601String(),
-        'attempts': attempts,
-        'last_error': lastError,
-      };
+    'id': id,
+    'idempotency_key': idempotencyKey,
+    'table': table,
+    'operation': operation.wire,
+    'payload': payload,
+    'created_at': createdAt.toIso8601String(),
+    'attempts': attempts,
+    'last_error': lastError,
+  };
 }
 
 enum OutboxOperation {
@@ -153,18 +153,20 @@ class Outbox {
 
   Future<void> markFailure(String id, String error) async {
     _entries = _entries
-        .map((e) => e.id == id
-            ? OutboxEntry(
-                id: e.id,
-                idempotencyKey: e.idempotencyKey,
-                table: e.table,
-                operation: e.operation,
-                payload: e.payload,
-                createdAt: e.createdAt,
-                attempts: e.attempts + 1,
-                lastError: error,
-              )
-            : e)
+        .map(
+          (e) => e.id == id
+              ? OutboxEntry(
+                  id: e.id,
+                  idempotencyKey: e.idempotencyKey,
+                  table: e.table,
+                  operation: e.operation,
+                  payload: e.payload,
+                  createdAt: e.createdAt,
+                  attempts: e.attempts + 1,
+                  lastError: error,
+                )
+              : e,
+        )
         .toList(growable: false);
     await _flush();
   }
@@ -175,8 +177,8 @@ class Outbox {
   }
 
   Future<void> _flush() => _file.writeAsString(
-        jsonEncode(_entries.map((e) => e.toJson()).toList(growable: false)),
-      );
+    jsonEncode(_entries.map((e) => e.toJson()).toList(growable: false)),
+  );
 }
 
 /// Returns a freshly minted idempotency key for an online write, used to make

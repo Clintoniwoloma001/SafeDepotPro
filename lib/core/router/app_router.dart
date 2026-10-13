@@ -18,6 +18,8 @@ import '../../features/inspections/inspections_screen.dart';
 import '../../features/notifications/notifications_screen.dart';
 import '../../features/permits/permits_screen.dart';
 import '../../features/profile/profile_screen.dart';
+import '../../features/shift_handover/shift_handover_screen.dart';
+import '../../features/truck_inspections/truck_inspections_screen.dart';
 import '../../features/audit/audit_screen.dart';
 import '../../features/tasks/tasks_screen.dart';
 import '../../features/shared/app_shell.dart';
@@ -142,11 +144,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: Routes.truckInspections,
-            builder: (context, state) => ComingSoonScreen.gated(
-              flagKey: 'truck_inspections',
-              title: 'Truck Inspections',
-              child: const _Placeholder('Truck Inspections'),
-            ),
+            builder: (context, state) => const TruckInspectionsScreen(),
           ),
 
           // ---- Operations (P2/P4) ------------------------------------------
@@ -160,11 +158,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: Routes.handover,
-            builder: (context, state) => ComingSoonScreen.gated(
-              flagKey: 'shift_handover',
-              title: 'Shift Handover',
-              child: const _Placeholder('Shift Handover'),
-            ),
+            builder: (context, state) => const ShiftHandoverScreen(),
           ),
           GoRoute(
             path: Routes.manHours,

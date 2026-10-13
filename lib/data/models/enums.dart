@@ -21,12 +21,13 @@ enum UserRole {
   final String label;
 
   static UserRole fromWire(String? value) => UserRole.values.firstWhere(
-        (r) => r.wire == value,
-        orElse: () => UserRole.user,
-      );
+    (r) => r.wire == value,
+    orElse: () => UserRole.user,
+  );
 
   /// True for roles that may manage configuration and see every depot.
-  bool get isAdmin => this == admin || this == countryHead || this == superadmin;
+  bool get isAdmin =>
+      this == admin || this == countryHead || this == superadmin;
 
   /// True for roles with full tenant visibility.
   bool get seesAllDepots => this == countryHead || this == superadmin;
@@ -43,9 +44,9 @@ enum TaskStatus {
   final String wire;
 
   static TaskStatus fromWire(String? value) => TaskStatus.values.firstWhere(
-        (s) => s.wire == value,
-        orElse: () => TaskStatus.pending,
-      );
+    (s) => s.wire == value,
+    orElse: () => TaskStatus.pending,
+  );
 }
 
 enum Severity {
@@ -59,9 +60,9 @@ enum Severity {
   final String wire;
 
   static Severity fromWire(String? value) => Severity.values.firstWhere(
-        (s) => s.wire == value,
-        orElse: () => Severity.medium,
-      );
+    (s) => s.wire == value,
+    orElse: () => Severity.medium,
+  );
 }
 
 enum Priority {
@@ -75,9 +76,9 @@ enum Priority {
   final String wire;
 
   static Priority fromWire(String? value) => Priority.values.firstWhere(
-        (s) => s.wire == value,
-        orElse: () => Priority.medium,
-      );
+    (s) => s.wire == value,
+    orElse: () => Priority.medium,
+  );
 }
 
 enum Frequency {
@@ -93,9 +94,9 @@ enum Frequency {
   final String wire;
 
   static Frequency fromWire(String? value) => Frequency.values.firstWhere(
-        (s) => s.wire == value,
-        orElse: () => Frequency.daily,
-      );
+    (s) => s.wire == value,
+    orElse: () => Frequency.daily,
+  );
 }
 
 enum CompletionMethod {
@@ -132,13 +133,16 @@ enum PermitStatus {
   final String wire;
 
   static PermitStatus fromWire(String? value) => PermitStatus.values.firstWhere(
-        (s) => s.wire == value,
-        orElse: () => PermitStatus.draft,
-      );
+    (s) => s.wire == value,
+    orElse: () => PermitStatus.draft,
+  );
 
   bool get isPending => this == submitted;
   bool get isClosed =>
-      this == approved || this == completed || this == rejected || this == cancelled;
+      this == approved ||
+      this == completed ||
+      this == rejected ||
+      this == cancelled;
 }
 
 enum InspectionStatus {
@@ -168,11 +172,8 @@ enum InspectionResponse {
 
   final String wire;
 
-  static InspectionResponse fromWire(String? value) =>
-      InspectionResponse.values.firstWhere(
-        (s) => s.wire == value,
-        orElse: () => InspectionResponse.na,
-      );
+  static InspectionResponse fromWire(String? value) => InspectionResponse.values
+      .firstWhere((s) => s.wire == value, orElse: () => InspectionResponse.na);
 
   bool get countsAgainstCompliance => this == fail || this == nonCompliant;
 }
@@ -187,11 +188,8 @@ enum IncidentStatus {
 
   final String wire;
 
-  static IncidentStatus fromWire(String? value) =>
-      IncidentStatus.values.firstWhere(
-        (s) => s.wire == value,
-        orElse: () => IncidentStatus.open,
-      );
+  static IncidentStatus fromWire(String? value) => IncidentStatus.values
+      .firstWhere((s) => s.wire == value, orElse: () => IncidentStatus.open);
 
   bool get isActive => this == open || this == inProgress;
 }
@@ -207,9 +205,9 @@ enum HazardStatus {
   final String wire;
 
   static HazardStatus fromWire(String? value) => HazardStatus.values.firstWhere(
-        (s) => s.wire == value,
-        orElse: () => HazardStatus.open,
-      );
+    (s) => s.wire == value,
+    orElse: () => HazardStatus.open,
+  );
 }
 
 enum CapaStatus {
@@ -225,9 +223,9 @@ enum CapaStatus {
   bool get isActive => this == open || this == inProgress;
 
   static CapaStatus fromWire(String? value) => CapaStatus.values.firstWhere(
-        (s) => s.wire == value,
-        orElse: () => CapaStatus.open,
-      );
+    (s) => s.wire == value,
+    orElse: () => CapaStatus.open,
+  );
 }
 
 enum StandInStatus {
@@ -241,10 +239,8 @@ enum StandInStatus {
 
   final String wire;
 
-  static StandInStatus fromWire(String? value) => StandInStatus.values.firstWhere(
-        (s) => s.wire == value,
-        orElse: () => StandInStatus.pending,
-      );
+  static StandInStatus fromWire(String? value) => StandInStatus.values
+      .firstWhere((s) => s.wire == value, orElse: () => StandInStatus.pending);
 }
 
 enum ShiftStatus {
@@ -257,9 +253,9 @@ enum ShiftStatus {
   final String wire;
 
   static ShiftStatus fromWire(String? value) => ShiftStatus.values.firstWhere(
-        (s) => s.wire == value,
-        orElse: () => ShiftStatus.pending,
-      );
+    (s) => s.wire == value,
+    orElse: () => ShiftStatus.pending,
+  );
 }
 
 enum AssetStatus {
@@ -273,9 +269,9 @@ enum AssetStatus {
   final String wire;
 
   static AssetStatus fromWire(String? value) => AssetStatus.values.firstWhere(
-        (s) => s.wire == value,
-        orElse: () => AssetStatus.available,
-      );
+    (s) => s.wire == value,
+    orElse: () => AssetStatus.available,
+  );
 }
 
 enum TruckResult {
@@ -287,9 +283,9 @@ enum TruckResult {
   final String wire;
 
   static TruckResult fromWire(String? value) => TruckResult.values.firstWhere(
-        (s) => s.wire == value,
-        orElse: () => TruckResult.pass,
-      );
+    (s) => s.wire == value,
+    orElse: () => TruckResult.pass,
+  );
 }
 
 /// Non-enum CHECK-constrained string columns, mirrored for type safety.
@@ -301,7 +297,14 @@ abstract final class SourceType {
   static const truckInspection = 'TRUCK_INSPECTION';
   static const audit = 'AUDIT';
 
-  static const all = [standalone, incident, hazard, inspection, truckInspection, audit];
+  static const all = [
+    standalone,
+    incident,
+    hazard,
+    inspection,
+    truckInspection,
+    audit,
+  ];
 }
 
 abstract final class ChecklistType {

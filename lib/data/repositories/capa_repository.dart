@@ -52,21 +52,25 @@ class CapaRepository {
     String? correctiveAction,
     DateTime? dueDate,
   }) async {
-    final row = await _client.from(table).insert({
-      'depot_id': depotId,
-      'title': title.trim(),
-      'description': description.trim(),
-      'priority': priority.wire,
-      'source_type': sourceType,
-      'source_id': sourceId,
-      'responsible_user_id': responsibleUserId,
-      'responsible_name': responsibleName,
-      'assigner_name': assignerName,
-      'root_cause': rootCause,
-      'corrective_action': correctiveAction,
-      'due_date': dueDate?.toIso8601String().split('T').first,
-      'client_request_id': idempotencyKey,
-    }).select().single();
+    final row = await _client
+        .from(table)
+        .insert({
+          'depot_id': depotId,
+          'title': title.trim(),
+          'description': description.trim(),
+          'priority': priority.wire,
+          'source_type': sourceType,
+          'source_id': sourceId,
+          'responsible_user_id': responsibleUserId,
+          'responsible_name': responsibleName,
+          'assigner_name': assignerName,
+          'root_cause': rootCause,
+          'corrective_action': correctiveAction,
+          'due_date': dueDate?.toIso8601String().split('T').first,
+          'client_request_id': idempotencyKey,
+        })
+        .select()
+        .single();
     return Capa.fromJson(row);
   }
 
@@ -98,9 +102,9 @@ class CapaRepository {
     required List<String> proofPaths,
     String? signaturePath,
   }) async {
-    await _client.from(table).update({
-      'proof_paths': proofPaths,
-      '?signature_path': signaturePath,
-    }).eq('id', id);
+    await _client
+        .from(table)
+        .update({'proof_paths': proofPaths, '?signature_path': signaturePath})
+        .eq('id', id);
   }
 }

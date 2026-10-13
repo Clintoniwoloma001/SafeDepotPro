@@ -35,7 +35,9 @@ class StorageRepository {
     String contentType = 'image/jpeg',
   }) async {
     final objectPath = _pathFor(bucket, depotId, fileName);
-    await _client.storage.from(bucket).uploadBinary(
+    await _client.storage
+        .from(bucket)
+        .uploadBinary(
           objectPath,
           bytes,
           fileOptions: FileOptions(contentType: contentType, upsert: false),
@@ -49,14 +51,13 @@ class StorageRepository {
     required String fileName,
     required File file,
     String contentType = 'image/jpeg',
-  }) =>
-      uploadBytes(
-        bucket: bucket,
-        depotId: depotId,
-        fileName: fileName,
-        bytes: file.readAsBytesSync(),
-        contentType: contentType,
-      );
+  }) => uploadBytes(
+    bucket: bucket,
+    depotId: depotId,
+    fileName: fileName,
+    bytes: file.readAsBytesSync(),
+    contentType: contentType,
+  );
 
   /// Public URL for a stored path. Paths may already be absolute URLs
   /// (data written by older tooling), in which case they are returned as-is.
@@ -68,7 +69,9 @@ class StorageRepository {
 
   Future<void> remove(String bucket, List<String> paths) async {
     if (paths.isEmpty) return;
-    await _client.storage.from(bucket).remove(paths.where((p) => !p.startsWith('http')).toList());
+    await _client.storage
+        .from(bucket)
+        .remove(paths.where((p) => !p.startsWith('http')).toList());
   }
 
   /// Depot-prefixed object path; also unsafe characters are stripped so the

@@ -35,7 +35,9 @@ class InspectionRepository {
         .select()
         .eq('is_active', true)
         .order('name', ascending: true);
-    return rows.map<ChecklistTemplate>(ChecklistTemplate.fromJson).toList(growable: false);
+    return rows
+        .map<ChecklistTemplate>(ChecklistTemplate.fromJson)
+        .toList(growable: false);
   }
 
   /// Creates an inspection and its answers.
@@ -52,31 +54,39 @@ class InspectionRepository {
     required List<Map<String, dynamic>> answers,
     String? notes,
     double compliance = 0,
+    String? signaturePath,
   }) async {
-    final row = await _client.from(table).insert({
-      'depot_id': depotId,
-      'template_id': templateId,
-      'checklist_name': checklistName,
-      'type': type,
-      'completed_by': completedBy,
-      'answers': answers,
-      'compliance': compliance,
-      'notes': notes,
-      'submitted_at': DateTime.now().toUtc().toIso8601String(),
-      'client_request_id': idempotencyKey,
-    }).select().single();
+    final row = await _client
+        .from(table)
+        .insert({
+          'depot_id': depotId,
+          'template_id': templateId,
+          'checklist_name': checklistName,
+          'type': type,
+          'completed_by': completedBy,
+          'answers': answers,
+          'compliance': compliance,
+          'notes': notes,
+          'submitted_at': DateTime.now().toUtc().toIso8601String(),
+          'client_request_id': idempotencyKey,
+          'signature_path': signaturePath,
+        })
+        .select()
+        .single();
 
     final inspection = Inspection.fromJson(row);
 
     final answerRows = answers
-        .map((a) => {
-              'inspection_id': inspection.id,
-              'question_id': a['question_id']?.toString() ?? '',
-              'response': a['response'],
-              'severity': a['severity'],
-              'comment': a['comment'],
-              'photo_paths': a['photo_paths'] ?? const <String>[],
-            })
+        .map(
+          (a) => {
+            'inspection_id': inspection.id,
+            'question_id': a['question_id']?.toString() ?? '',
+            'response': a['response'],
+            'severity': a['severity'],
+            'comment': a['comment'],
+            'photo_paths': a['photo_paths'] ?? const <String>[],
+          },
+        )
         .toList(growable: false);
     if (answerRows.isNotEmpty) {
       await _client.from(answersTable).insert(answerRows);

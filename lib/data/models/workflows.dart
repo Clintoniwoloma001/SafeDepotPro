@@ -63,29 +63,31 @@ class Permit {
   final DateTime updatedAt;
 
   factory Permit.fromJson(Map<String, dynamic> j) => Permit(
-        id: Json.str(j, 'id'),
-        permitNumber: Json.str(j, 'permit_number'),
-        depotId: Json.str(j, 'depot_id'),
-        permitType: Json.strOrNull(j, 'permit_type'),
-        jobTitle: Json.str(j, 'job_title'),
-        jobDescription: Json.strOrNull(j, 'job_description'),
-        tasks: Json.listOfMaps(j, 'tasks'),
-        location: Json.strOrNull(j, 'location'),
-        startDatetime: DateTime.tryParse(Json.str(j, 'start_datetime', fallback: '')),
-        endDatetime: DateTime.tryParse(Json.str(j, 'end_datetime', fallback: '')),
-        hazardAssessment: Json.listOfMaps(j, 'hazard_assessment'),
-        additionalControls: Json.strOrNull(j, 'additional_controls'),
-        ppe: Json.listOfMaps(j, 'ppe'),
-        isolationLoto: Json.strOrNull(j, 'isolation_loto'),
-        attachmentPaths: Json.strList(j, 'attachment_paths'),
-        status: PermitStatus.fromWire(Json.strOrNull(j, 'status')),
-        rejectionReason: Json.strOrNull(j, 'rejection_reason'),
-        approvedAt: DateTime.tryParse(Json.str(j, 'approved_at', fallback: '')),
-        approvedBy: Json.strOrNull(j, 'approved_by'),
-        createdBy: Json.strOrNull(j, 'created_by'),
-        createdAt: DateTime.parse(Json.str(j, 'created_at')),
-        updatedAt: DateTime.parse(Json.str(j, 'updated_at')),
-      );
+    id: Json.str(j, 'id'),
+    permitNumber: Json.str(j, 'permit_number'),
+    depotId: Json.str(j, 'depot_id'),
+    permitType: Json.strOrNull(j, 'permit_type'),
+    jobTitle: Json.str(j, 'job_title'),
+    jobDescription: Json.strOrNull(j, 'job_description'),
+    tasks: Json.listOfMaps(j, 'tasks'),
+    location: Json.strOrNull(j, 'location'),
+    startDatetime: DateTime.tryParse(
+      Json.str(j, 'start_datetime', fallback: ''),
+    ),
+    endDatetime: DateTime.tryParse(Json.str(j, 'end_datetime', fallback: '')),
+    hazardAssessment: Json.listOfMaps(j, 'hazard_assessment'),
+    additionalControls: Json.strOrNull(j, 'additional_controls'),
+    ppe: Json.listOfMaps(j, 'ppe'),
+    isolationLoto: Json.strOrNull(j, 'isolation_loto'),
+    attachmentPaths: Json.strList(j, 'attachment_paths'),
+    status: PermitStatus.fromWire(Json.strOrNull(j, 'status')),
+    rejectionReason: Json.strOrNull(j, 'rejection_reason'),
+    approvedAt: DateTime.tryParse(Json.str(j, 'approved_at', fallback: '')),
+    approvedBy: Json.strOrNull(j, 'approved_by'),
+    createdBy: Json.strOrNull(j, 'created_by'),
+    createdAt: DateTime.parse(Json.str(j, 'created_at')),
+    updatedAt: DateTime.parse(Json.str(j, 'updated_at')),
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -117,7 +119,8 @@ class ChecklistTemplate {
   final DateTime createdAt;
   final DateTime updatedAt;
 
-  factory ChecklistTemplate.fromJson(Map<String, dynamic> j) => ChecklistTemplate(
+  factory ChecklistTemplate.fromJson(Map<String, dynamic> j) =>
+      ChecklistTemplate(
         id: Json.str(j, 'id'),
         name: Json.str(j, 'name'),
         type: Json.str(j, 'type', fallback: ChecklistType.hse),
@@ -131,9 +134,9 @@ class ChecklistTemplate {
       );
 
   int get questionCount => sections.fold(
-        0,
-        (sum, s) => sum + ((s['questions'] as List?)?.length ?? 0),
-      );
+    0,
+    (sum, s) => sum + ((s['questions'] as List?)?.length ?? 0),
+  );
 }
 
 class Inspection {
@@ -149,6 +152,7 @@ class Inspection {
     this.compliance = 0,
     this.notes,
     this.submittedAt,
+    this.signaturePath,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -164,24 +168,26 @@ class Inspection {
   final double compliance;
   final String? notes;
   final DateTime? submittedAt;
+  final String? signaturePath;
   final DateTime createdAt;
   final DateTime updatedAt;
 
   factory Inspection.fromJson(Map<String, dynamic> j) => Inspection(
-        id: Json.str(j, 'id'),
-        depotId: Json.strOrNull(j, 'depot_id'),
-        templateId: Json.strOrNull(j, 'template_id'),
-        checklistName: Json.str(j, 'checklist_name'),
-        type: Json.str(j, 'type', fallback: ChecklistType.hse),
-        status: InspectionStatus.fromWire(Json.strOrNull(j, 'status')),
-        completedBy: Json.strOrNull(j, 'completed_by'),
-        answers: Json.listOfMaps(j, 'answers'),
-        compliance: Json.doubleOrNull(j, 'compliance') ?? 0,
-        notes: Json.strOrNull(j, 'notes'),
-        submittedAt: DateTime.tryParse(Json.str(j, 'submitted_at', fallback: '')),
-        createdAt: DateTime.parse(Json.str(j, 'created_at')),
-        updatedAt: DateTime.parse(Json.str(j, 'updated_at')),
-      );
+    id: Json.str(j, 'id'),
+    depotId: Json.strOrNull(j, 'depot_id'),
+    templateId: Json.strOrNull(j, 'template_id'),
+    checklistName: Json.str(j, 'checklist_name'),
+    type: Json.str(j, 'type', fallback: ChecklistType.hse),
+    status: InspectionStatus.fromWire(Json.strOrNull(j, 'status')),
+    completedBy: Json.strOrNull(j, 'completed_by'),
+    answers: Json.listOfMaps(j, 'answers'),
+    compliance: Json.doubleOrNull(j, 'compliance') ?? 0,
+    notes: Json.strOrNull(j, 'notes'),
+    submittedAt: DateTime.tryParse(Json.str(j, 'submitted_at', fallback: '')),
+    signaturePath: Json.strOrNull(j, 'signature_path'),
+    createdAt: DateTime.parse(Json.str(j, 'created_at')),
+    updatedAt: DateTime.parse(Json.str(j, 'updated_at')),
+  );
 
   int get answeredCount => answers.length;
   int get failCount => answers
@@ -231,23 +237,23 @@ class Incident {
   final DateTime updatedAt;
 
   factory Incident.fromJson(Map<String, dynamic> j) => Incident(
-        id: Json.str(j, 'id'),
-        incidentNumber: Json.str(j, 'incident_number'),
-        depotId: Json.str(j, 'depot_id'),
-        incidentType: Json.strOrNull(j, 'incident_type'),
-        severity: Severity.fromWire(Json.strOrNull(j, 'severity')),
-        description: Json.str(j, 'description'),
-        status: IncidentStatus.fromWire(Json.strOrNull(j, 'status')),
-        occurredAt: DateTime.parse(Json.str(j, 'occurred_at')),
-        photoPaths: Json.strList(j, 'photo_paths'),
-        involvedPersonnel: Json.listOfMaps(j, 'involved_personnel'),
-        rootCause: Json.strOrNull(j, 'root_cause'),
-        actionsTaken: Json.strOrNull(j, 'actions_taken'),
-        reportedBy: Json.strOrNull(j, 'reported_by'),
-        reportedByName: Json.strOrNull(j, 'reported_by_name'),
-        createdAt: DateTime.parse(Json.str(j, 'created_at')),
-        updatedAt: DateTime.parse(Json.str(j, 'updated_at')),
-      );
+    id: Json.str(j, 'id'),
+    incidentNumber: Json.str(j, 'incident_number'),
+    depotId: Json.str(j, 'depot_id'),
+    incidentType: Json.strOrNull(j, 'incident_type'),
+    severity: Severity.fromWire(Json.strOrNull(j, 'severity')),
+    description: Json.str(j, 'description'),
+    status: IncidentStatus.fromWire(Json.strOrNull(j, 'status')),
+    occurredAt: DateTime.parse(Json.str(j, 'occurred_at')),
+    photoPaths: Json.strList(j, 'photo_paths'),
+    involvedPersonnel: Json.listOfMaps(j, 'involved_personnel'),
+    rootCause: Json.strOrNull(j, 'root_cause'),
+    actionsTaken: Json.strOrNull(j, 'actions_taken'),
+    reportedBy: Json.strOrNull(j, 'reported_by'),
+    reportedByName: Json.strOrNull(j, 'reported_by_name'),
+    createdAt: DateTime.parse(Json.str(j, 'created_at')),
+    updatedAt: DateTime.parse(Json.str(j, 'updated_at')),
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -306,33 +312,31 @@ class Capa {
   final DateTime updatedAt;
 
   factory Capa.fromJson(Map<String, dynamic> j) => Capa(
-        id: Json.str(j, 'id'),
-        capaNumber: Json.str(j, 'capa_number'),
-        depotId: Json.str(j, 'depot_id'),
-        title: Json.str(j, 'title'),
-        sourceType: Json.str(j, 'source_type', fallback: SourceType.standalone),
-        sourceId: Json.strOrNull(j, 'source_id'),
-        status: CapaStatus.fromWire(Json.strOrNull(j, 'status')),
-        priority: Priority.fromWire(Json.strOrNull(j, 'priority')),
-        dueDate: DateTime.tryParse(Json.str(j, 'due_date', fallback: '')),
-        completionRate: Json.intOr(j, 'completion_rate'),
-        description: Json.strOrNull(j, 'description'),
-        rootCause: Json.strOrNull(j, 'root_cause'),
-        correctiveAction: Json.strOrNull(j, 'corrective_action'),
-        responsibleUserId: Json.strOrNull(j, 'responsible_user_id'),
-        responsibleName: Json.strOrNull(j, 'responsible_name'),
-        assignerUserId: Json.strOrNull(j, 'assigner_user_id'),
-        assignerName: Json.strOrNull(j, 'assigner_name'),
-        completedAt: DateTime.tryParse(Json.str(j, 'completed_at', fallback: '')),
-        completedBy: Json.strOrNull(j, 'completed_by'),
-        proofPaths: Json.strList(j, 'proof_paths'),
-        signaturePath: Json.strOrNull(j, 'signature_path'),
-        createdAt: DateTime.parse(Json.str(j, 'created_at')),
-        updatedAt: DateTime.parse(Json.str(j, 'updated_at')),
-      );
+    id: Json.str(j, 'id'),
+    capaNumber: Json.str(j, 'capa_number'),
+    depotId: Json.str(j, 'depot_id'),
+    title: Json.str(j, 'title'),
+    sourceType: Json.str(j, 'source_type', fallback: SourceType.standalone),
+    sourceId: Json.strOrNull(j, 'source_id'),
+    status: CapaStatus.fromWire(Json.strOrNull(j, 'status')),
+    priority: Priority.fromWire(Json.strOrNull(j, 'priority')),
+    dueDate: DateTime.tryParse(Json.str(j, 'due_date', fallback: '')),
+    completionRate: Json.intOr(j, 'completion_rate'),
+    description: Json.strOrNull(j, 'description'),
+    rootCause: Json.strOrNull(j, 'root_cause'),
+    correctiveAction: Json.strOrNull(j, 'corrective_action'),
+    responsibleUserId: Json.strOrNull(j, 'responsible_user_id'),
+    responsibleName: Json.strOrNull(j, 'responsible_name'),
+    assignerUserId: Json.strOrNull(j, 'assigner_user_id'),
+    assignerName: Json.strOrNull(j, 'assigner_name'),
+    completedAt: DateTime.tryParse(Json.str(j, 'completed_at', fallback: '')),
+    completedBy: Json.strOrNull(j, 'completed_by'),
+    proofPaths: Json.strList(j, 'proof_paths'),
+    signaturePath: Json.strOrNull(j, 'signature_path'),
+    createdAt: DateTime.parse(Json.str(j, 'created_at')),
+    updatedAt: DateTime.parse(Json.str(j, 'updated_at')),
+  );
 
   bool get isOverdue =>
-      dueDate != null &&
-      status.isActive &&
-      dueDate!.isBefore(DateTime.now());
+      dueDate != null && status.isActive && dueDate!.isBefore(DateTime.now());
 }

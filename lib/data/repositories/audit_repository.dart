@@ -62,11 +62,17 @@ class NotificationRepository {
         .eq('user_id', userId)
         .order('created_at', ascending: false)
         .limit(limit);
-    return rows.map<AppNotification>(AppNotification.fromJson).toList(growable: false);
+    return rows
+        .map<AppNotification>(AppNotification.fromJson)
+        .toList(growable: false);
   }
 
   Future<int> unreadCount(String userId) async {
-    final rows = await _client.from(table).select('id').eq('user_id', userId).eq('is_read', false);
+    final rows = await _client
+        .from(table)
+        .select('id')
+        .eq('user_id', userId)
+        .eq('is_read', false);
     return rows.length;
   }
 

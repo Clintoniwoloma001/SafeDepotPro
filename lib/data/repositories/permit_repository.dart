@@ -20,7 +20,10 @@ class PermitRepository {
 
   static const table = 'permits';
 
-  Future<List<Permit>> listPermits({PermitStatus? status, int limit = 200}) async {
+  Future<List<Permit>> listPermits({
+    PermitStatus? status,
+    int limit = 200,
+  }) async {
     var query = _client.from(table).select();
     if (status != null) {
       query = query.eq('status', status.wire);
@@ -40,18 +43,22 @@ class PermitRepository {
     DateTime? endDatetime,
     List<String> attachmentPaths = const [],
   }) async {
-    final row = await _client.from(table).insert({
-      'depot_id': depotId,
-      'job_title': jobTitle.trim(),
-      'permit_type': permitType,
-      'job_description': jobDescription,
-      'location': location,
-      'start_datetime': startDatetime?.toIso8601String(),
-      'end_datetime': endDatetime?.toIso8601String(),
-      'attachment_paths': attachmentPaths,
-      'status': PermitStatus.submitted.wire,
-      'client_request_id': idempotencyKey,
-    }).select().single();
+    final row = await _client
+        .from(table)
+        .insert({
+          'depot_id': depotId,
+          'job_title': jobTitle.trim(),
+          'permit_type': permitType,
+          'job_description': jobDescription,
+          'location': location,
+          'start_datetime': startDatetime?.toIso8601String(),
+          'end_datetime': endDatetime?.toIso8601String(),
+          'attachment_paths': attachmentPaths,
+          'status': PermitStatus.submitted.wire,
+          'client_request_id': idempotencyKey,
+        })
+        .select()
+        .single();
     return Permit.fromJson(row);
   }
 
@@ -59,7 +66,8 @@ class PermitRepository {
   ///
   /// `actorId` must be an admin per the `permits_update` policy; the write
   /// will simply fail if it is not, which the UI surfaces as an error.
-  Future<void> approve(String id, String actorId) => _decide(id, PermitStatus.approved, actorId);
+  Future<void> approve(String id, String actorId) =>
+      _decide(id, PermitStatus.approved, actorId);
 
   /// Rejects a permit with a mandatory reason, which is what makes a rejection
   /// actionable rather than anonymous.
@@ -72,11 +80,14 @@ class PermitRepository {
     String actorId, {
     String? reason,
   }) async {
-    await _client.from(table).update({
-      'status': status.wire,
-      'approved_at': DateTime.now().toUtc().toIso8601String(),
-      'approved_by': actorId,
-      if (reason != null) 'rejection_reason': reason.trim(),
-    }).eq('id', id);
+    await _client
+        .from(table)
+        .update({
+          'status': status.wire,
+          'approved_at': DateTime.now().toUtc().toIso8601String(),
+          'approved_by': actorId,
+          if (reason != null) 'rejection_reason': reason.trim(),
+        })
+        .eq('id', id);
   }
 }

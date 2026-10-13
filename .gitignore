@@ -96,3 +96,5 @@ upload-keystore.jks
 # ---- Logs ----
 *.log
 logs/
+# Widget Preview related
+.widget_preview/

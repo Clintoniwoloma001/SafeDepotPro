@@ -25,7 +25,10 @@ class IncidentRepository {
   /// `can_read_depot(depot_id)`; no depot filter is applied here because the
   /// database already enforces isolation and an extra filter would only mask
   /// bugs in the policies.
-  Future<List<Incident>> listIncidents({IncidentStatus? status, int limit = 200}) async {
+  Future<List<Incident>> listIncidents({
+    IncidentStatus? status,
+    int limit = 200,
+  }) async {
     var query = _client.from(table).select();
     if (status != null) {
       query = query.eq('status', status.wire);
@@ -50,22 +53,28 @@ class IncidentRepository {
     List<Map<String, dynamic>> involvedPersonnel = const [],
     DateTime? occurredAt,
   }) async {
-    final row = await _client.from(table).insert({
-      'depot_id': depotId,
-      'description': description.trim(),
-      'severity': severity.wire,
-      'reported_by': reportedBy,
-      'reported_by_name': reportedByName,
-      'incident_type': incidentType,
-      'root_cause': rootCause,
-      'actions_taken': actionsTaken,
-      'photo_paths': photoPaths,
-      'involved_personnel': involvedPersonnel,
-      'occurred_at': (occurredAt ?? DateTime.now()).toUtc().toIso8601String(),
-      // Idempotency: set by the app, enforced by a unique index. A retried
-      // insert hits the conflict branch and returns the original row.
-      'client_request_id': idempotencyKey,
-    }).select().single();
+    final row = await _client
+        .from(table)
+        .insert({
+          'depot_id': depotId,
+          'description': description.trim(),
+          'severity': severity.wire,
+          'reported_by': reportedBy,
+          'reported_by_name': reportedByName,
+          'incident_type': incidentType,
+          'root_cause': rootCause,
+          'actions_taken': actionsTaken,
+          'photo_paths': photoPaths,
+          'involved_personnel': involvedPersonnel,
+          'occurred_at': (occurredAt ?? DateTime.now())
+              .toUtc()
+              .toIso8601String(),
+          // Idempotency: set by the app, enforced by a unique index. A retried
+          // insert hits the conflict branch and returns the original row.
+          'client_request_id': idempotencyKey,
+        })
+        .select()
+        .single();
     return Incident.fromJson(row);
   }
 
@@ -76,9 +85,9 @@ class IncidentRepository {
     required IncidentStatus status,
     String? actionsTaken,
   }) async {
-    await _client.from(table).update({
-      'status': status.wire,
-      '?actions_taken': actionsTaken,
-    }).eq('id', id);
+    await _client
+        .from(table)
+        .update({'status': status.wire, '?actions_taken': actionsTaken})
+        .eq('id', id);
   }
 }

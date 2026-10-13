@@ -140,18 +140,14 @@ class _AppBottomBar extends StatelessWidget {
           color: theme.colorScheme.surface,
           border: Border(top: BorderSide(color: theme.colorScheme.outline)),
         ),
-        child: Row(
+         child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            for (final dest in [BottomSlot.home, BottomSlot.tasks]) ...[
-              _Slot(dest: dest, isActive: _isActive(dest, location)),
-              const Spacer(),
-            ],
+            _Slot(dest: BottomSlot.home, isActive: _isActive(BottomSlot.home, location)),
+            _Slot(dest: BottomSlot.tasks, isActive: _isActive(BottomSlot.tasks, location)),
             _CentreAction(role: role),
-            const Spacer(),
-            for (final dest in [BottomSlot.safety, BottomSlot.more]) ...[
-              _Slot(dest: dest, isActive: _isActive(dest, location)),
-              const Spacer(),
-            ],
+            _Slot(dest: BottomSlot.safety, isActive: _isActive(BottomSlot.safety, location)),
+            _Slot(dest: BottomSlot.more, isActive: _isActive(BottomSlot.more, location)),
           ],
         ),
       ),
@@ -179,48 +175,46 @@ class _Slot extends StatelessWidget {
     final d = _primaryDestinations[dest]!;
     final color = isActive ? colors.brandRed : theme.colorScheme.onSurfaceVariant;
 
-    return Expanded(
-      child: InkWell(
-        onTap: () {
-          HapticFeedback.selectionClick();
-          context.go(d.path);
-        },
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 180),
-              child: Icon(
-                isActive ? d.active : d.icon,
-                key: ValueKey(isActive),
+    return InkWell(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        context.go(d.path);
+      },
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 180),
+            child: Icon(
+              isActive ? d.active : d.icon,
+              key: ValueKey(isActive),
+              color: color,
+              size: 22,
+            ),
+          ),
+          const SizedBox(height: 4),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              d.label,
+              maxLines: 1,
+              style: theme.textTheme.labelSmall?.copyWith(
                 color: color,
-                size: 22,
+                fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
               ),
             ),
-            const SizedBox(height: 4),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                d.label,
-                maxLines: 1,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: color,
-                  fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-                ),
-              ),
+          ),
+          const SizedBox(height: 2),
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            height: 2,
+            width: isActive ? 18 : 0,
+            decoration: BoxDecoration(
+              color: colors.brandRed,
+              borderRadius: BorderRadius.circular(2),
             ),
-            const SizedBox(height: 2),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              height: 2,
-              width: isActive ? 18 : 0,
-              decoration: BoxDecoration(
-                color: colors.brandRed,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

@@ -6,11 +6,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:signature/signature.dart';
 
 import '../../data/models/enums.dart';
 import '../../data/models/workflows.dart';
 import '../../data/repositories/storage_repository.dart';
 import '../../providers/providers.dart';
+import '../shared/signature_pad.dart';
 import '../shared/ui_kit.dart';
 import '../../core/router/routes.dart';
 import '../../data/repositories/auth_repository.dart';
@@ -43,9 +45,17 @@ class _QuestionResult {
 class _InspectionRunnerScreenState
     extends ConsumerState<InspectionRunnerScreen> {
   final Map<String, _QuestionResult> _answers = {};
+  final _signatureController = SignatureController();
   ChecklistTemplate? _template;
   bool _saving = false;
   String? _error;
+  String? _signaturePath;
+
+  @override
+  void dispose() {
+    _signatureController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -82,6 +92,13 @@ class _InspectionRunnerScreenState
               ),
               const SizedBox(height: 16),
               if (_template != null) ..._renderTemplate(_template!),
+              const SizedBox(height: 16),
+              SignaturePad(
+                controller: _signatureController,
+                label: 'Inspector signature',
+                savedPath: _signaturePath,
+                onSaved: (path) => setState(() => _signaturePath = path),
+              ),
               if (_error != null) ...[
                 const SizedBox(height: 16),
                 InlineError(_error!),
@@ -219,6 +236,7 @@ class _InspectionRunnerScreenState
             idempotencyKey: newIdempotencyKey(),
             answers: answersPayload,
             compliance: compliance,
+            signaturePath: _signaturePath,
           );
 
       if (!mounted) return;

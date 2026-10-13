@@ -32,20 +32,26 @@ class FeatureFlag {
   final String? message;
 
   static FeatureFlag fromJson(Map<String, dynamic> j) => FeatureFlag(
-        key: j['key'] as String,
-        enabled: j['enabled'] == true,
-        minBuild: (j['min_build'] as num?)?.toInt(),
-        roles: (j['roles'] as List?)?.map((e) => e.toString()).toList(growable: false) ?? const [],
-        message: j['message'] as String?,
-      );
+    key: j['key'] as String,
+    enabled: j['enabled'] == true,
+    minBuild: (j['min_build'] as num?)?.toInt(),
+    roles:
+        (j['roles'] as List?)
+            ?.map((e) => e.toString())
+            .toList(growable: false) ??
+        const [],
+    message: j['message'] as String?,
+  );
 }
 
 /// The set of enabled flag keys for the current user and build.
 ///
 /// Deliberately a `Set<String>` rather than a map: the gate only asks "is this
 /// on", and the extra fields belong to the settings screen that lists flags.
-final featureFlagsProvider = NotifierProvider<
-    FeatureFlagsNotifier, AsyncValue<Set<String>>>(FeatureFlagsNotifier.new);
+final featureFlagsProvider =
+    NotifierProvider<FeatureFlagsNotifier, AsyncValue<Set<String>>>(
+      FeatureFlagsNotifier.new,
+    );
 
 /// Reads and caches the feature-flag table.
 ///
@@ -101,10 +107,7 @@ class FeatureFlagsNotifier extends Notifier<AsyncValue<Set<String>>> {
       state = AsyncValue.data(keys);
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_cacheKey, jsonEncode(keys.toList()));
-      await prefs.setString(
-        _cacheAtKey,
-        DateTime.now().toIso8601String(),
-      );
+      await prefs.setString(_cacheAtKey, DateTime.now().toIso8601String());
     } catch (e) {
       if (state is! AsyncData) {
         state = AsyncValue.error(e, StackTrace.current);
@@ -122,7 +125,10 @@ final installedBuildProvider = Provider<int>((ref) => 1);
 
 /// Full flag rows for the settings screen.
 final allFeatureFlagsProvider = FutureProvider<List<FeatureFlag>>((ref) async {
-  final rows = await SupabaseService.client.from('feature_flags').select().order('key');
+  final rows = await SupabaseService.client
+      .from('feature_flags')
+      .select()
+      .order('key');
   return (rows as List)
       .cast<Map<String, dynamic>>()
       .map(FeatureFlag.fromJson)
@@ -150,14 +156,14 @@ class RemoteBuild {
   final String? sha256;
 
   static RemoteBuild fromJson(Map<String, dynamic> j) => RemoteBuild(
-        buildNumber: (j['build_number'] as num?)?.toInt() ?? 0,
-        version: j['version'] as String? ?? '',
-        status: j['status'] as String?,
-        apkUrl: j['apk_url'] as String?,
-        minSupportedBuild: (j['min_supported_build'] as num?)?.toInt(),
-        releaseNotes: j['release_notes'] as String?,
-        sha256: j['sha256'] as String?,
-      );
+    buildNumber: (j['build_number'] as num?)?.toInt() ?? 0,
+    version: j['version'] as String? ?? '',
+    status: j['status'] as String?,
+    apkUrl: j['apk_url'] as String?,
+    minSupportedBuild: (j['min_supported_build'] as num?)?.toInt(),
+    releaseNotes: j['release_notes'] as String?,
+    sha256: j['sha256'] as String?,
+  );
 }
 
 /// The newest published build, used to decide whether to prompt for a full

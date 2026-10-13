@@ -39,7 +39,11 @@ class DepotRepository {
   }
 
   Future<AppSettings?> settings() async {
-    final row = await _client.from('app_settings').select().limit(1).maybeSingle();
+    final row = await _client
+        .from('app_settings')
+        .select()
+        .limit(1)
+        .maybeSingle();
     return row == null ? null : AppSettings.fromJson(row);
   }
 }

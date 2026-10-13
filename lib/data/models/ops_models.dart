@@ -133,3 +133,161 @@ class Truck {
 
   bool get isOperational => status == 'OPERATIONAL';
 }
+
+/// A row from `shift_handovers` (migration 0013).
+class ShiftHandover {
+  const ShiftHandover({
+    required this.id,
+    required this.depotId,
+    required this.shift,
+    required this.date,
+    this.outgoingUserId,
+    this.incomingUserId,
+    this.summary,
+    this.pendingIssues = const [],
+    this.equipmentNotes,
+    this.photoPaths = const [],
+    this.status = ShiftStatus.pending,
+    this.signatureOutgoing,
+    this.signatureIncoming,
+    this.confirmedAt,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+
+  final String id;
+  final String depotId;
+  final String shift;
+  final String date;
+  final String? outgoingUserId;
+  final String? incomingUserId;
+  final String? summary;
+  final List<String> pendingIssues;
+  final String? equipmentNotes;
+  final List<String> photoPaths;
+  final ShiftStatus status;
+  final String? signatureOutgoing;
+  final String? signatureIncoming;
+  final DateTime? confirmedAt;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+
+  factory ShiftHandover.fromJson(Map<String, dynamic> j) => ShiftHandover(
+        id: Json.str(j, 'id'),
+        depotId: Json.str(j, 'depot_id'),
+        shift: Json.str(j, 'shift', fallback: 'DAY'),
+        date: Json.str(j, 'date'),
+        outgoingUserId: Json.strOrNull(j, 'outgoing_user_id'),
+        incomingUserId: Json.strOrNull(j, 'incoming_user_id'),
+        summary: Json.strOrNull(j, 'summary'),
+        pendingIssues: Json.strList(j, 'pending_issues'),
+        equipmentNotes: Json.strOrNull(j, 'equipment_notes'),
+        photoPaths: Json.strList(j, 'photo_paths'),
+        status: ShiftStatus.fromWire(Json.strOrNull(j, 'status')),
+        signatureOutgoing: Json.strOrNull(j, 'signature_outgoing'),
+        signatureIncoming: Json.strOrNull(j, 'signature_incoming'),
+        confirmedAt: DateTime.tryParse(Json.str(j, 'confirmed_at', fallback: '')),
+        createdAt: DateTime.parse(Json.str(j, 'created_at')),
+        updatedAt: DateTime.parse(Json.str(j, 'updated_at')),
+      );
+
+  bool get isCompleted => status == ShiftStatus.confirmed;
+}
+
+/// A row from `man_hours` (migration 0012).
+class ManHours {
+  const ManHours({
+    required this.id,
+    required this.depotId,
+    required this.periodStart,
+    required this.periodEnd,
+    this.hoursWorked = 0,
+    this.overtimeHours = 0,
+    this.headcount = 0,
+    this.recordableIncidents = 0,
+    this.lostTimeIncidents = 0,
+    this.nearMisses = 0,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+
+  final String id;
+  final String depotId;
+  final DateTime periodStart;
+  final DateTime? periodEnd;
+  final double hoursWorked;
+  final double overtimeHours;
+  final int headcount;
+  final int recordableIncidents;
+  final int lostTimeIncidents;
+  final int nearMisses;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+
+  factory ManHours.fromJson(Map<String, dynamic> j) => ManHours(
+        id: Json.str(j, 'id'),
+        depotId: Json.str(j, 'depot_id'),
+        periodStart: DateTime.parse(Json.str(j, 'period_start')),
+        periodEnd: DateTime.tryParse(Json.str(j, 'period_end', fallback: '')),
+        hoursWorked: Json.doubleOrNull(j, 'hours_worked') ?? 0,
+        overtimeHours: Json.doubleOrNull(j, 'overtime_hours') ?? 0,
+        headcount: Json.intOr(j, 'headcount'),
+        recordableIncidents: Json.intOr(j, 'recordable_incidents'),
+        lostTimeIncidents: Json.intOr(j, 'lost_time_incidents'),
+        nearMisses: Json.intOr(j, 'near_misses'),
+        createdAt: DateTime.parse(Json.str(j, 'created_at')),
+        updatedAt: DateTime.parse(Json.str(j, 'updated_at')),
+      );
+
+  /// Total man-hours worked including overtime.
+  double get totalHours => hoursWorked + overtimeHours;
+}
+
+/// A row from `truck_inspections` (created by this feature).
+class TruckInspection {
+  const TruckInspection({
+    required this.id,
+    required this.truckId,
+    required this.depotId,
+    required this.inspectedBy,
+    required this.result,
+    this.notes,
+    this.photoPaths = const [],
+    this.compliance = 0,
+    this.latitude,
+    this.longitude,
+    this.signaturePath,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+
+  final String id;
+  final String truckId;
+  final String depotId;
+  final String inspectedBy;
+  final TruckResult result;
+  final String? notes;
+  final List<String> photoPaths;
+  final double compliance;
+  final double? latitude;
+  final double? longitude;
+  final String? signaturePath;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+
+  factory TruckInspection.fromJson(Map<String, dynamic> j) => TruckInspection(
+        id: Json.str(j, 'id'),
+        truckId: Json.str(j, 'truck_id'),
+        depotId: Json.str(j, 'depot_id'),
+        inspectedBy: Json.str(j, 'inspected_by'),
+        result: TruckResult.fromWire(Json.strOrNull(j, 'result')),
+        notes: Json.strOrNull(j, 'notes'),
+        photoPaths: Json.strList(j, 'photo_paths'),
+        compliance: Json.doubleOrNull(j, 'compliance') ?? 0,
+        latitude: Json.doubleOrNull(j, 'latitude'),
+        longitude: Json.doubleOrNull(j, 'longitude'),
+        signaturePath: Json.strOrNull(j, 'signature_path'),
+        createdAt: DateTime.parse(Json.str(j, 'created_at')),
+        updatedAt: DateTime.parse(Json.str(j, 'updated_at')),
+      );
+}

@@ -16,8 +16,11 @@ import 'enums.dart';
 /// SQL NULL, but not every column is non-null in the schema, so all reads go
 /// through these.
 abstract final class Json {
-  static String str(Map<String, dynamic> j, String key, {String fallback = ''}) =>
-      j[key] as String? ?? fallback;
+  static String str(
+    Map<String, dynamic> j,
+    String key, {
+    String fallback = '',
+  }) => j[key] as String? ?? fallback;
 
   static String? strOrNull(Map<String, dynamic> j, String key) =>
       j[key] as String?;
@@ -42,8 +45,11 @@ abstract final class Json {
     return null;
   }
 
-  static bool boolOr(Map<String, dynamic> j, String key, {bool fallback = false}) =>
-      j[key] as bool? ?? fallback;
+  static bool boolOr(
+    Map<String, dynamic> j,
+    String key, {
+    bool fallback = false,
+  }) => j[key] as bool? ?? fallback;
 
   static List<String> strList(Map<String, dynamic> j, String key) {
     final v = j[key];
@@ -54,9 +60,9 @@ abstract final class Json {
   static List<int> intList(Map<String, dynamic> j, String key) {
     final v = j[key];
     if (v is List) {
-      return v.map((e) => e is num ? e.toInt() : int.tryParse('$e') ?? 0).toList(
-        growable: false,
-      );
+      return v
+          .map((e) => e is num ? e.toInt() : int.tryParse('$e') ?? 0)
+          .toList(growable: false);
     }
     return const [];
   }
@@ -67,7 +73,10 @@ abstract final class Json {
     return const {};
   }
 
-  static List<Map<String, dynamic>> listOfMaps(Map<String, dynamic> j, String key) {
+  static List<Map<String, dynamic>> listOfMaps(
+    Map<String, dynamic> j,
+    String key,
+  ) {
     final v = j[key];
     if (v is List) {
       return v
@@ -110,23 +119,24 @@ class Profile {
   final DateTime updatedAt;
 
   factory Profile.fromJson(Map<String, dynamic> j) => Profile(
-        id: Json.str(j, 'id'),
-        fullName: Json.strOrNull(j, 'full_name'),
-        role: UserRole.fromWire(Json.strOrNull(j, 'role')),
-        depotId: Json.strOrNull(j, 'depot_id'),
-        phone: Json.strOrNull(j, 'phone'),
-        preferredLanguage: Json.str(j, 'preferred_language', fallback: 'en'),
-        avatarUrl: Json.strOrNull(j, 'avatar_url'),
-        isActive: Json.boolOr(j, 'is_active', fallback: true),
-        createdAt: DateTime.parse(Json.str(j, 'created_at')),
-        updatedAt: DateTime.parse(Json.str(j, 'updated_at')),
-      );
+    id: Json.str(j, 'id'),
+    fullName: Json.strOrNull(j, 'full_name'),
+    role: UserRole.fromWire(Json.strOrNull(j, 'role')),
+    depotId: Json.strOrNull(j, 'depot_id'),
+    phone: Json.strOrNull(j, 'phone'),
+    preferredLanguage: Json.str(j, 'preferred_language', fallback: 'en'),
+    avatarUrl: Json.strOrNull(j, 'avatar_url'),
+    isActive: Json.boolOr(j, 'is_active', fallback: true),
+    createdAt: DateTime.parse(Json.str(j, 'created_at')),
+    updatedAt: DateTime.parse(Json.str(j, 'updated_at')),
+  );
 
   String get displayName => (fullName?.trim().isNotEmpty ?? false)
       ? fullName!.trim()
       : 'Unnamed user';
 
-  Profile copyWith({UserRole? role, String? depotId, bool? isActive}) => Profile(
+  Profile copyWith({UserRole? role, String? depotId, bool? isActive}) =>
+      Profile(
         id: id,
         fullName: fullName,
         role: role ?? this.role,
@@ -167,17 +177,17 @@ class Depot {
   final DateTime updatedAt;
 
   factory Depot.fromJson(Map<String, dynamic> j) => Depot(
-        id: Json.str(j, 'id'),
-        code: Json.str(j, 'code'),
-        name: Json.str(j, 'name'),
-        city: Json.strOrNull(j, 'city'),
-        region: Json.strOrNull(j, 'region'),
-        latitude: Json.doubleOrNull(j, 'latitude'),
-        longitude: Json.doubleOrNull(j, 'longitude'),
-        isActive: Json.boolOr(j, 'is_active', fallback: true),
-        createdAt: DateTime.parse(Json.str(j, 'created_at')),
-        updatedAt: DateTime.parse(Json.str(j, 'updated_at')),
-      );
+    id: Json.str(j, 'id'),
+    code: Json.str(j, 'code'),
+    name: Json.str(j, 'name'),
+    city: Json.strOrNull(j, 'city'),
+    region: Json.strOrNull(j, 'region'),
+    latitude: Json.doubleOrNull(j, 'latitude'),
+    longitude: Json.doubleOrNull(j, 'longitude'),
+    isActive: Json.boolOr(j, 'is_active', fallback: true),
+    createdAt: DateTime.parse(Json.str(j, 'created_at')),
+    updatedAt: DateTime.parse(Json.str(j, 'updated_at')),
+  );
 
   String get displayName => '$code — $name';
 }
@@ -199,12 +209,12 @@ class DepotZone {
   final DateTime createdAt;
 
   factory DepotZone.fromJson(Map<String, dynamic> j) => DepotZone(
-        id: Json.str(j, 'id'),
-        depotId: Json.str(j, 'depot_id'),
-        name: Json.str(j, 'name'),
-        description: Json.strOrNull(j, 'description'),
-        createdAt: DateTime.parse(Json.str(j, 'created_at')),
-      );
+    id: Json.str(j, 'id'),
+    depotId: Json.str(j, 'depot_id'),
+    name: Json.str(j, 'name'),
+    description: Json.strOrNull(j, 'description'),
+    createdAt: DateTime.parse(Json.str(j, 'created_at')),
+  );
 }
 
 /// A row from `public.app_settings`.
@@ -242,21 +252,21 @@ class AppSettings {
   final DateTime updatedAt;
 
   factory AppSettings.fromJson(Map<String, dynamic> j) => AppSettings(
-        id: Json.str(j, 'id'),
-        orgName: Json.str(j, 'org_name', fallback: 'SafeDepot Services'),
-        logoUrl: Json.strOrNull(j, 'logo_url'),
-        defaultLanguage: Json.str(j, 'default_language', fallback: 'en'),
-        timezone: Json.str(j, 'timezone', fallback: 'UTC'),
-        currency: Json.str(j, 'currency', fallback: 'USD'),
-        enableAiReminders: Json.boolOr(j, 'enable_ai_reminders'),
-        aiReminderWindowDays: Json.intOr(j, 'ai_reminder_window_days', fallback: 7),
-        reminderFrequency: Json.str(j, 'reminder_frequency', fallback: 'overdue'),
-        reminderTime: Json.str(j, 'reminder_time', fallback: '08:00'),
-        reminderMessage: Json.strOrNull(j, 'reminder_message'),
-        jsonVersion: Json.str(j, 'json_version', fallback: '1'),
-        createdAt: DateTime.parse(Json.str(j, 'created_at')),
-        updatedAt: DateTime.parse(Json.str(j, 'updated_at')),
-      );
+    id: Json.str(j, 'id'),
+    orgName: Json.str(j, 'org_name', fallback: 'SafeDepot Services'),
+    logoUrl: Json.strOrNull(j, 'logo_url'),
+    defaultLanguage: Json.str(j, 'default_language', fallback: 'en'),
+    timezone: Json.str(j, 'timezone', fallback: 'UTC'),
+    currency: Json.str(j, 'currency', fallback: 'USD'),
+    enableAiReminders: Json.boolOr(j, 'enable_ai_reminders'),
+    aiReminderWindowDays: Json.intOr(j, 'ai_reminder_window_days', fallback: 7),
+    reminderFrequency: Json.str(j, 'reminder_frequency', fallback: 'overdue'),
+    reminderTime: Json.str(j, 'reminder_time', fallback: '08:00'),
+    reminderMessage: Json.strOrNull(j, 'reminder_message'),
+    jsonVersion: Json.str(j, 'json_version', fallback: '1'),
+    createdAt: DateTime.parse(Json.str(j, 'created_at')),
+    updatedAt: DateTime.parse(Json.str(j, 'updated_at')),
+  );
 }
 
 /// A row from `public.audit_log` (see 0015_triggers_and_indexes.sql).
@@ -283,14 +293,14 @@ class AuditEntry {
   final DateTime createdAt;
 
   factory AuditEntry.fromJson(Map<String, dynamic> j) => AuditEntry(
-        id: Json.str(j, 'id'),
-        actorUserId: Json.strOrNull(j, 'actor_user_id'),
-        actorName: Json.strOrNull(j, 'actor_name'),
-        action: Json.str(j, 'action'),
-        target: Json.strOrNull(j, 'target'),
-        meta: Json.mapOr(j, 'meta'),
-        createdAt: DateTime.parse(Json.str(j, 'created_at')),
-      );
+    id: Json.str(j, 'id'),
+    actorUserId: Json.strOrNull(j, 'actor_user_id'),
+    actorName: Json.strOrNull(j, 'actor_name'),
+    action: Json.str(j, 'action'),
+    target: Json.strOrNull(j, 'target'),
+    meta: Json.mapOr(j, 'meta'),
+    createdAt: DateTime.parse(Json.str(j, 'created_at')),
+  );
 }
 
 /// A row from the `public.notifications` table (migration 0017).
@@ -320,15 +330,15 @@ class AppNotification {
   final DateTime createdAt;
 
   factory AppNotification.fromJson(Map<String, dynamic> j) => AppNotification(
-        id: Json.str(j, 'id'),
-        userId: Json.str(j, 'user_id'),
-        depotId: Json.strOrNull(j, 'depot_id'),
-        title: Json.str(j, 'title'),
-        body: Json.strOrNull(j, 'body'),
-        category: Json.strOrNull(j, 'category'),
-        link: Json.strOrNull(j, 'link'),
-        severity: Severity.fromWire(Json.strOrNull(j, 'severity')),
-        isRead: Json.boolOr(j, 'is_read'),
-        createdAt: DateTime.parse(Json.str(j, 'created_at')),
-      );
+    id: Json.str(j, 'id'),
+    userId: Json.str(j, 'user_id'),
+    depotId: Json.strOrNull(j, 'depot_id'),
+    title: Json.str(j, 'title'),
+    body: Json.strOrNull(j, 'body'),
+    category: Json.strOrNull(j, 'category'),
+    link: Json.strOrNull(j, 'link'),
+    severity: Severity.fromWire(Json.strOrNull(j, 'severity')),
+    isRead: Json.boolOr(j, 'is_read'),
+    createdAt: DateTime.parse(Json.str(j, 'created_at')),
+  );
 }
