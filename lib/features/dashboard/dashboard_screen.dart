@@ -357,6 +357,14 @@ class _KpiGrid extends StatelessWidget {
         subLabel: 'recorded this month',
         onTap: () => context.push(Routes.inspections),
       ),
+      KpiCard(
+        label: 'Man-hours 30d',
+        value: '${counts.manHours30d}',
+        icon: Icons.access_time_outlined,
+        hue: counts.manHours30d > 0 ? SemanticHue.good : SemanticHue.warn,
+        subLabel: 'records this month',
+        onTap: () => context.push(Routes.manHours),
+      ),
     ];
 
     return GridView.count(

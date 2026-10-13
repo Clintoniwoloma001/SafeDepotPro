@@ -2,7 +2,6 @@
 // Designed and developed by Clinton Iwoloma — The Imaginr, CEO, Flatra Tech Ltd.
 // Proprietary and confidential. Unauthorized copying, modification, distribution or reuse is prohibited.
 // Contact: +2349025975247
-import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,8 +9,6 @@ import 'package:geolocator/geolocator.dart';
 import 'package:signature/signature.dart';
 
 import '../../data/models/ops_models.dart';
-import '../../data/repositories/auth_repository.dart';
-import '../../data/repositories/storage_repository.dart';
 import '../../data/models/models.dart';
 import '../../data/models/enums.dart';
 import '../../providers/providers.dart';
@@ -57,7 +54,6 @@ class TruckInspectionsScreen extends ConsumerWidget {
     final profile = ref.watch(profileProvider).profile;
     if (profile == null) return const ErrorView(message: 'Not signed in.');
 
-    final depotId = profile.depotId;
     final trucksAsync = ref.watch(trucksProvider);
 
     return Scaffold(
@@ -89,7 +85,7 @@ class TruckInspectionsScreen extends ConsumerWidget {
             child: ListView.separated(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 80),
               itemCount: trucks.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 10),
+              separatorBuilder: (_, _) => const SizedBox(height: 10),
               itemBuilder: (ctx, i) =>
                   _TruckCard(truck: trucks[i], profile: profile),
             ),
@@ -126,7 +122,7 @@ class TruckInspectionsScreen extends ConsumerWidget {
                 return ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: inspections.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  separatorBuilder: (_, _) => const SizedBox(height: 8),
                   itemBuilder: (ctx, i) {
                     final tr = inspections[i];
                     return Card(
@@ -204,7 +200,7 @@ class _TruckCardState extends ConsumerState<_TruckCard> {
       data: (_) {
         if (mounted) setState(() => _loadingLocation = false);
       },
-      error: (_, __) {
+      error: (_, _) {
         if (mounted) setState(() => _loadingLocation = false);
       },
       loading: () {

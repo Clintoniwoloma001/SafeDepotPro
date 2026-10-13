@@ -209,12 +209,14 @@ class DashboardCounts {
     this.overdueCapa = 0,
     this.pendingPermits = 0,
     this.inspections30d = 0,
+    this.manHours30d = 0,
   });
 
   final int openIncidents;
   final int overdueCapa;
   final int pendingPermits;
   final int inspections30d;
+  final int manHours30d;
 
   int get needsAttention => openIncidents + overdueCapa + pendingPermits;
 }
@@ -227,6 +229,7 @@ final dashboardCountsProvider = FutureProvider<DashboardCounts>((ref) async {
   final capa = ref.read(capaRepositoryProvider);
   final permits = ref.read(permitRepositoryProvider);
   final inspections = ref.read(inspectionRepositoryProvider);
+  final ops = ref.read(opsRepositoryProvider);
 
   // Server-side status filter rather than fetching a wide window and filtering
   // locally: the open list is small, and it keeps the count honest.
@@ -237,11 +240,13 @@ final dashboardCountsProvider = FutureProvider<DashboardCounts>((ref) async {
     capa.listCapa(),
     permits.listPermits(),
     inspections.listInspections(),
+    ops.listManHours(depotId: profile.depotId),
   ]);
 
   final capaAll = results[0] as List<Capa>;
   final permitsAll = results[1] as List<Permit>;
   final inspectionsAll = results[2] as List<Inspection>;
+  final manHoursAll = results[3] as List<ManHours>;
 
   final cutoff = DateTime.now().subtract(const Duration(days: 30));
   return DashboardCounts(
@@ -250,6 +255,9 @@ final dashboardCountsProvider = FutureProvider<DashboardCounts>((ref) async {
     pendingPermits: permitsAll.where((p) => p.status.isPending).length,
     inspections30d: inspectionsAll
         .where((i) => i.createdAt.isAfter(cutoff))
+        .length,
+    manHours30d: manHoursAll
+        .where((m) => m.periodStart.isAfter(cutoff))
         .length,
   );
 });

@@ -15,6 +15,7 @@ import '../../features/dashboard/dashboard_screen.dart';
 import '../../features/incidents/incidents_screens.dart';
 import '../../features/inspections/inspection_runner_screen.dart';
 import '../../features/inspections/inspections_screen.dart';
+import '../../features/manhours/manhours_screen.dart';
 import '../../features/notifications/notifications_screen.dart';
 import '../../features/permits/permits_screen.dart';
 import '../../features/profile/profile_screen.dart';
@@ -162,11 +163,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: Routes.manHours,
-            builder: (context, state) => ComingSoonScreen.gated(
-              flagKey: 'man_hours',
-              title: 'Man-Hours',
-              child: const _Placeholder('Man-Hours'),
-            ),
+            builder: (context, state) => const ManHoursScreen(),
           ),
 
           // ---- Assets (P5) -------------------------------------------------

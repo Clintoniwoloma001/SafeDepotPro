@@ -5,12 +5,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:signature/signature.dart';
 
-import '../../data/models/ops_models.dart';
-import '../../data/repositories/auth_repository.dart';
-import '../../data/repositories/storage_repository.dart';
 import '../../data/models/enums.dart';
 import '../../providers/providers.dart';
 import '../shared/signature_pad.dart';
@@ -45,18 +41,6 @@ class _ShiftHandoverScreenState extends ConsumerState<ShiftHandoverScreen> {
     _outgoingSignature.dispose();
     _incomingSignature.dispose();
     super.dispose();
-  }
-
-  Future<void> _pickDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _date,
-      firstDate: DateTime.now().subtract(const Duration(days: 30)),
-      lastDate: DateTime.now().add(const Duration(days: 7)),
-    );
-    if (picked != null && picked != _date) {
-      setState(() => _date = picked);
-    }
   }
 
   Future<void> _save() async {
@@ -139,7 +123,7 @@ class _ShiftHandoverScreenState extends ConsumerState<ShiftHandoverScreen> {
                       return ListView.separated(
                         padding: const EdgeInsets.all(16),
                         itemCount: list.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 8),
+                        separatorBuilder: (_, _) => const SizedBox(height: 8),
                         itemBuilder: (ctx, i) {
                           final h = list[i];
                           return Card(

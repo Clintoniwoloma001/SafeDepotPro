@@ -6,8 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../data/models/ops_models.dart';
-import '../../data/repositories/auth_repository.dart';
 import '../../providers/providers.dart';
 import '../shared/ui_kit.dart';
 
@@ -54,7 +52,6 @@ class _ManHoursScreenState extends ConsumerState<ManHoursScreen> {
   }
 
   Future<void> _pickPeriodEnd() async {
-    if (_periodStart == null) return;
     final picked = await showDatePicker(
       context: context,
       initialDate: _periodEnd ?? _periodStart,
@@ -139,7 +136,7 @@ class _ManHoursScreenState extends ConsumerState<ManHoursScreen> {
                   return const EmptyView(
                     title: 'No man-hours recorded',
                     message:
-                        'Record your first man-hours entry by pressing the '+' button.',
+                        "Record your first man-hours entry by pressing the '+' button.",
                     actionLabel: 'Add record',
                     onAction: null,
                   );
@@ -147,7 +144,7 @@ class _ManHoursScreenState extends ConsumerState<ManHoursScreen> {
                 return ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: list.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  separatorBuilder: (_, _) => const SizedBox(height: 10),
                   itemBuilder: (ctx, i) {
                     final m = list[i];
                     final totalHours = m.totalHours;
@@ -386,8 +383,4 @@ class _ManHoursScreenState extends ConsumerState<ManHoursScreen> {
       },
     );
   }
-}
-
-extension on DateTime {
-  bool isAfter(DateTime other) => compareTo(other) > 0;
 }
