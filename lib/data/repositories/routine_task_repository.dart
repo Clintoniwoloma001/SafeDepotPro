@@ -117,6 +117,7 @@ class OpsRepository {
     String? equipmentNotes,
     String? signatureOutgoing,
     String? signatureIncoming,
+    List<String> photoPaths = const [],
   }) async {
     final row = await _client
         .from('shift_handovers')
@@ -131,6 +132,7 @@ class OpsRepository {
           'equipment_notes': equipmentNotes,
           'signature_outgoing': signatureOutgoing,
           'signature_incoming': signatureIncoming,
+          'photo_paths': photoPaths,
         })
         .select()
         .single();
@@ -144,6 +146,7 @@ class OpsRepository {
     String? equipmentNotes,
     String? signatureOutgoing,
     String? signatureIncoming,
+    List<String>? photoPaths,
   }) async {
     final updates = <String, dynamic>{};
     if (summary != null) updates['summary'] = summary;
@@ -154,6 +157,9 @@ class OpsRepository {
     }
     if (signatureIncoming != null) {
       updates['signature_incoming'] = signatureIncoming;
+    }
+    if (photoPaths != null) {
+      updates['photo_paths'] = photoPaths;
     }
     if (updates.isNotEmpty) {
       updates['status'] = ShiftStatus.confirmed.wire;

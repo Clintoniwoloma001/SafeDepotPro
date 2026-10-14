@@ -12,6 +12,7 @@ import '../../data/models/ops_models.dart';
 import '../../data/models/models.dart';
 import '../../data/models/enums.dart';
 import '../../providers/providers.dart';
+import '../shared/photo_capture_sheet.dart';
 import '../shared/signature_pad.dart';
 import '../shared/ui_kit.dart';
 
@@ -180,6 +181,7 @@ class _TruckCardState extends ConsumerState<_TruckCard> {
   bool _loadingLocation = false;
   final _inspectionSignature = SignatureController();
   String? _signaturePath;
+  List<String> _photoPaths = const [];
 
   @override
   void dispose() {
@@ -261,7 +263,7 @@ class _TruckCardState extends ConsumerState<_TruckCard> {
             inspectedBy: widget.profile.id,
             result: result,
             notes: _notes,
-            photoPaths: const [],
+            photoPaths: _photoPaths,
             latitude: _distance > 0 ? depot.latitude : null,
             longitude: _distance > 0 ? depot.longitude : null,
             signaturePath: signaturePath,
@@ -390,6 +392,39 @@ class _TruckCardState extends ConsumerState<_TruckCard> {
               maxLines: 3,
               onChanged: (v) => _notes = v.trim().isEmpty ? null : v.trim(),
             ),
+            const SizedBox(height: 12),
+            if (_photoPaths.isNotEmpty) ...[
+              SizedBox(
+                height: 100,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _photoPaths.length,
+                  separatorBuilder: (_, _) => const SizedBox(width: 12),
+                  itemBuilder: (ctx, i) => _PhotoThumb(
+                    path: _photoPaths[i],
+                    onRemove: () {
+                      setState(() => _photoPaths.removeAt(i));
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+            OutlinedButton.icon(
+              onPressed: _photoPaths.length >= 5
+                  ? null
+                  : () => PhotoCaptureSheet.show(
+                        context,
+                        onPhotosChanged: (paths) => setState(() => _photoPaths = paths),
+                        initialPaths: _photoPaths,
+                        maxPhotos: 5,
+                        title: 'Inspection photos',
+                      ),
+              icon: const Icon(Icons.add_a_photo_outlined, size: 20),
+              label: _photoPaths.isEmpty
+                  ? const Text('Add photos')
+                  : Text('Add photos (${_photoPaths.length}/5)'),
+            ),
           ],
         ),
         actions: [
@@ -489,6 +524,59 @@ class _TruckCardState extends ConsumerState<_TruckCard> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _PhotoThumb extends StatelessWidget {
+  const _PhotoThumb({required this.path, required this.onRemove});
+
+  final String path;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          width: 90,
+          height: 90,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: theme.colorScheme.outline),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Image.network(
+            path,
+            fit: BoxFit.cover,
+            loadingBuilder: (ctx, child, progress) {
+              if (progress == null) return child;
+              return const Center(child: CircularProgressIndicator(strokeWidth: 2));
+            },
+            errorBuilder: (ctx, _, _) => const Center(
+              child: Icon(Icons.broken_image, size: 32),
+            ),
+          ),
+        ),
+        Positioned(
+          top: -6,
+          right: -6,
+          child: Material(
+            color: theme.colorScheme.error,
+            shape: const CircleBorder(),
+            child: InkWell(
+              onTap: onRemove,
+              borderRadius: BorderRadius.circular(12),
+              child: const Padding(
+                padding: EdgeInsets.all(4),
+                child: Icon(Icons.close, size: 14, color: Colors.white),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

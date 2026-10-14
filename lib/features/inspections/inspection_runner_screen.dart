@@ -12,6 +12,7 @@ import '../../data/models/enums.dart';
 import '../../data/models/workflows.dart';
 import '../../data/repositories/storage_repository.dart';
 import '../../providers/providers.dart';
+import '../shared/photo_capture_sheet.dart';
 import '../shared/signature_pad.dart';
 import '../shared/ui_kit.dart';
 import '../../core/router/routes.dart';
@@ -50,6 +51,7 @@ class _InspectionRunnerScreenState
   bool _saving = false;
   String? _error;
   String? _signaturePath;
+  List<String> _photoPaths = const [];
 
   @override
   void dispose() {
@@ -92,6 +94,13 @@ class _InspectionRunnerScreenState
               ),
               const SizedBox(height: 16),
               if (_template != null) ..._renderTemplate(_template!),
+              const SizedBox(height: 16),
+              PhotoGrid(
+                paths: _photoPaths,
+                onChanged: (paths) => setState(() => _photoPaths = paths),
+                maxPhotos: 5,
+                label: 'Inspection photos',
+              ),
               const SizedBox(height: 16),
               SignaturePad(
                 controller: _signatureController,
@@ -237,6 +246,7 @@ class _InspectionRunnerScreenState
             answers: answersPayload,
             compliance: compliance,
             signaturePath: _signaturePath,
+            photoPaths: _photoPaths,
           );
 
       if (!mounted) return;

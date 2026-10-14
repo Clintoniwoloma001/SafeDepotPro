@@ -9,6 +9,7 @@ import 'package:signature/signature.dart';
 
 import '../../data/models/enums.dart';
 import '../../providers/providers.dart';
+import '../shared/photo_capture_sheet.dart';
 import '../shared/signature_pad.dart';
 import '../shared/ui_kit.dart';
 
@@ -28,6 +29,7 @@ class _ShiftHandoverScreenState extends ConsumerState<ShiftHandoverScreen> {
   final _incomingSignature = SignatureController();
   String? _outgoingSignaturePath;
   String? _incomingSignaturePath;
+  List<String> _photoPaths = const [];
   String _shift = 'DAY';
   DateTime _date = DateTime.now();
   bool _saving = false;
@@ -77,6 +79,7 @@ class _ShiftHandoverScreenState extends ConsumerState<ShiftHandoverScreen> {
                 _equipmentNotes.text.trim().isEmpty ? null : _equipmentNotes.text.trim(),
             signatureOutgoing: _outgoingSignaturePath,
             signatureIncoming: _incomingSignaturePath,
+            photoPaths: _photoPaths,
           );
 
       ref.invalidate(shiftHandoversProvider);
@@ -184,8 +187,10 @@ class _ShiftHandoverScreenState extends ConsumerState<ShiftHandoverScreen> {
         incomingSignature: _incomingSignature,
         outgoingSignaturePath: _outgoingSignaturePath,
         incomingSignaturePath: _incomingSignaturePath,
+        photoPaths: _photoPaths,
         onOutgoingSignatureSaved: (path) => setState(() => _outgoingSignaturePath = path),
         onIncomingSignatureSaved: (path) => setState(() => _incomingSignaturePath = path),
+        onPhotosChanged: (paths) => setState(() => _photoPaths = paths),
         onShiftChanged: (v) => setState(() => _shift = v ?? _shift),
         onDateChanged: (v) => setState(() => _date = v ?? _date),
         onSave: _save,
@@ -207,8 +212,10 @@ class _HandoverForm extends StatelessWidget {
     required this.incomingSignature,
     this.outgoingSignaturePath,
     this.incomingSignaturePath,
+    required this.photoPaths,
     required this.onOutgoingSignatureSaved,
     required this.onIncomingSignatureSaved,
+    required this.onPhotosChanged,
     required this.onShiftChanged,
     required this.onDateChanged,
     required this.onSave,
@@ -225,8 +232,10 @@ class _HandoverForm extends StatelessWidget {
   final SignatureController incomingSignature;
   final String? outgoingSignaturePath;
   final String? incomingSignaturePath;
+  final List<String> photoPaths;
   final ValueChanged<String> onOutgoingSignatureSaved;
   final ValueChanged<String> onIncomingSignatureSaved;
+  final ValueChanged<List<String>> onPhotosChanged;
   final ValueChanged<String?> onShiftChanged;
   final ValueChanged<DateTime?> onDateChanged;
   final VoidCallback onSave;
@@ -305,6 +314,13 @@ class _HandoverForm extends StatelessWidget {
               hintText: 'Any equipment issues or concerns',
             ),
             maxLines: 3,
+          ),
+          const SizedBox(height: 16),
+          PhotoGrid(
+            paths: photoPaths,
+            onChanged: onPhotosChanged,
+            maxPhotos: 5,
+            label: 'Photos',
           ),
           const SizedBox(height: 16),
           SignaturePad(

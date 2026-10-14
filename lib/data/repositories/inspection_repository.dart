@@ -55,6 +55,7 @@ class InspectionRepository {
     String? notes,
     double compliance = 0,
     String? signaturePath,
+    List<String> photoPaths = const [],
   }) async {
     final row = await _client
         .from(table)
@@ -70,6 +71,7 @@ class InspectionRepository {
           'submitted_at': DateTime.now().toUtc().toIso8601String(),
           'client_request_id': idempotencyKey,
           'signature_path': signaturePath,
+          'photo_paths': photoPaths,
         })
         .select()
         .single();
