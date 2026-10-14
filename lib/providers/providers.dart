@@ -259,5 +259,14 @@ final dashboardCountsProvider = FutureProvider<DashboardCounts>((ref) async {
     manHours30d: manHoursAll
         .where((m) => m.periodStart.isAfter(cutoff))
         .length,
-  );
+);
+});
+
+/// All users (profiles) for user management.
+/// Only visible to SUPERADMIN/COUNTRY_HEAD (RLS enforced).
+final usersProvider = FutureProvider<List<Profile>>((ref) async {
+  final profile = ref.watch(profileProvider).profile;
+  if (profile == null) return const [];
+  if (!profile.role.canSeeAllDepots) return const [];
+  return ref.read(authRepositoryProvider).listAllUsers();
 });

@@ -23,6 +23,7 @@ import '../../features/shift_handover/shift_handover_screen.dart';
 import '../../features/truck_inspections/truck_inspections_screen.dart';
 import '../../features/audit/audit_screen.dart';
 import '../../features/tasks/tasks_screen.dart';
+import '../../features/user_management/user_management_screen.dart';
 import '../../features/shared/app_shell.dart';
 import '../../features/shared/components.dart';
 import '../../features/shared/flutter_splash.dart';
@@ -236,12 +237,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: Routes.userManagement,
             builder: (context, state) => RoleGuard(
               allowed: (r) => r.seesAllDepots,
-              child: ComingSoonScreen.gated(
-                flagKey: 'user_management',
-                title: 'User Management',
-                message: 'Only a super admin may manage accounts.',
-                child: const _Placeholder('User Management'),
-              ),
+              child: const UserManagementScreen(),
             ),
           ),
           GoRoute(

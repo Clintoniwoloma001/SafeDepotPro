@@ -127,6 +127,70 @@ class AuthRepository {
     return fetchProfile(session.user.id);
   }
 
+  /// Invites a new user by creating an auth user and profile row.
+  /// Only SUPERADMIN/COUNTRY_HEAD can call this (enforced by RLS).
+  Future<void> inviteUser({
+    required String email,
+    required String displayName,
+    required UserRole role,
+    String? depotId,
+  }) async {
+    // Use admin API to create user with email confirmation bypassed
+    // Note: In production, you'd use Supabase Admin API with service role
+    // For now, we'll insert into profiles directly and let the user sign up
+    // This is a simplified version - in practice you'd use the admin API
+    final authRes = await _client.auth.admin.createUser(
+      AdminUserAttributes(
+        email: email,
+        emailConfirm: true,
+        userMetadata: {'display_name': displayName},
+      ),
+    );
+    final userId = authRes.user?.id;
+    if (userId == null) throw Exception('Failed to create auth user');
+
+    await _client.from(profilesTable).insert({
+      'id': userId,
+      'email': email,
+      'display_name': displayName,
+      'role': role.wire,
+      'depot_id': depotId,
+      'is_active': true,
+    });
+  }
+
+  /// Updates an existing user's profile (name, role, depot).
+  /// Only SUPERADMIN/COUNTRY_HEAD can call this (enforced by RLS).
+  Future<void> updateUserProfile({
+    required String userId,
+    required String displayName,
+    required UserRole role,
+    String? depotId,
+  }) async {
+    await _client.from(profilesTable).update({
+      'display_name': displayName,
+      'role': role.wire,
+      'depot_id': depotId,
+      'updated_at': DateTime.now().toUtc().toIso8601String(),
+    }).eq('id', userId);
+  }
+
+  /// Deactivates a user (soft delete - sets is_active = false).
+  /// Only SUPERADMIN/COUNTRY_HEAD can call this (enforced by RLS).
+  Future<void> deactivateUser(String userId) async {
+    await _client.from(profilesTable).update({
+      'is_active': false,
+      'updated_at': DateTime.now().toUtc().toIso8601String(),
+    }).eq('id', userId);
+  }
+
+  /// Lists all users (profiles) for user management.
+  /// Only SUPERADMIN/COUNTRY_HEAD can call this (enforced by RLS).
+  Future<List<Profile>> listAllUsers() async {
+    final rows = await _client.from(profilesTable).select().order('display_name');
+    return rows.map<Profile>(Profile.fromJson).toList(growable: false);
+  }
+
   static String _authMessage(AuthException e) {
     final msg = e.message.toLowerCase();
     if (msg.contains('invalid login credentials')) {
