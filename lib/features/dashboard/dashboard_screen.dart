@@ -12,14 +12,25 @@ import '../../core/theme/tokens.dart';
 import '../../data/models/enums.dart';
 import '../../data/models/models.dart';
 import '../../providers/providers.dart';
+import '../../data/repositories/routine_task_repository.dart';
 import '../shared/components.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/services.dart';
 
-/// Role-aware dashboard.
-///
-/// Layout, in order: compact greeting header, hero compliance ring, 2×2 KPI
-/// grid, one scrollable chip row, "needs attention" list, depot card. Nothing
-/// decorative — every element answers a question a supervisor would actually
-/// ask on opening the app.
+
+/// Selected day for the dashboard compliance ring.
+class _ComplianceDayNotifier extends Notifier<DateTime> {
+  @override
+  DateTime build() => DateTime.now();
+}
+
+final complianceDayProvider =
+    NotifierProvider<_ComplianceDayNotifier, DateTime>(_ComplianceDayNotifier.new);
+
+final complianceCountsProvider = FutureProvider.family<({int due, int done}), DateTime>((ref, day) async {
+  return ref.read(routineTaskRepositoryProvider).complianceForDay(day);
+});
+
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
 
@@ -69,6 +80,8 @@ class DashboardScreen extends ConsumerWidget {
             const SizedBox(height: AppTokens.spaceSm),
             const _NeedsAttentionList(),
             const SizedBox(height: AppTokens.spaceLg),
+            const _DailyReasonPrompt(),
+            const SizedBox(height: AppTokens.spaceLg),
             const SectionHeader(title: 'Your depot'),
             const SizedBox(height: AppTokens.spaceSm),
             const _DepotCard(),
@@ -80,7 +93,7 @@ class DashboardScreen extends ConsumerWidget {
 }
 
 /// Logo mark, title, depot chip, bell and copilot — the single top-bar spec for
-/// main screens. No sign-out: that belongs in More › Account.
+/// main screens.
 class _AppBarTitle extends ConsumerWidget {
   const _AppBarTitle();
 
@@ -169,8 +182,6 @@ class _GreetingHeader extends StatelessWidget {
         .split(RegExp(r'\s+'))
         .map((word) {
           if (word.isEmpty) return word;
-          // An all-caps word is an acronym (AIISM, DSO) and must stay caps;
-          // lower-casing "AIISM" into "Aiism" misnames the person.
           if (word.length <= 6 && word == word.toUpperCase()) return word;
           return word[0].toUpperCase() + word.substring(1).toLowerCase();
         })
@@ -230,90 +241,151 @@ class _GreetingHeader extends StatelessWidget {
   }
 }
 
-/// Hero card: today's tasks done vs due, as a ring.
-///
-/// The ring is the one place a large number is allowed, because it is the
-/// single figure the dashboard exists to show.
-class _ComplianceRingCard extends StatelessWidget {
+/// Hero card: selected day's tasks done vs due, as a ring.
+class _ComplianceRingCard extends ConsumerWidget {
   const _ComplianceRingCard();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final day = ref.watch(complianceDayProvider);
+    final countsAsync = ref.watch(complianceCountsProvider(day));
 
-    // Real numbers arrive with the routine-tasks slice; until then the ring is
-    // inert rather than false, so it reads as unpopulated rather than zero.
-    const done = 0;
-    const due = 0;
-    const ratio = due == 0 ? null : done / due;
+    return countsAsync.when(
+      loading: () => _buildRing(context, theme, null, 0, 0, day, ref),
+      error: (_, __) => _buildRing(context, theme, null, 0, 0, day, ref),
+      data: (c) {
+        final ratio = c.due == 0 ? null : c.done / c.due;
+        return _buildRing(context, theme, ratio, c.done, c.due, day, ref);
+      },
+    );
+  }
 
+  Widget _buildRing(BuildContext context, ThemeData theme, double? ratio, int done, int due, DateTime day, WidgetRef ref) {
+    final canPrev = true;
+    final canNext = !_isToday(day);
     return AppCard(
       padding: const EdgeInsets.all(AppTokens.spaceLg),
-      child: Row(
+      child: Column(
         children: [
-          SizedBox(
-            width: 88,
-            height: 88,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                SizedBox(
-                  width: 88,
-                  height: 88,
-                  child: CircularProgressIndicator(
-                    value: ratio ?? 0,
-                    strokeWidth: 9,
-                    backgroundColor: theme.colorScheme.outlineVariant,
-                    valueColor: AlwaysStoppedAnimation(
-                      ratio == null
-                          // A ring with no data must read as "no data", not as
-                          // a green pass. Neutral grey is the honest colour.
-                          ? theme.colorScheme.outline
-                          : AppTokens.complianceColor((ratio * 100)),
-                    ),
+          Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.chevron_left),
+                onPressed: () => ref.read(complianceDayProvider.notifier).state =
+                    day.subtract(const Duration(days: 1)),
+              ),
+              Expanded(
+                child: Center(
+                  child: TextButton(
+                    onPressed: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: day,
+                        firstDate: DateTime(2020),
+                        lastDate: DateTime.now(),
+                      );
+                      if (picked != null) {
+                        ref.read(complianceDayProvider.notifier).state = picked;
+                      }
+                    },
+                    child: Text(_fmtDate(day)),
                   ),
                 ),
-                Column(
-                  mainAxisSize: MainAxisSize.min,
+              ),
+              IconButton(
+                icon: const Icon(Icons.chevron_right),
+                onPressed: canNext
+                    ? () => ref.read(complianceDayProvider.notifier).state =
+                        day.add(const Duration(days: 1))
+                    : null,
+              ),
+            ],
+          ),
+          Row(
+            children: [
+              SizedBox(
+                width: 88,
+                height: 88,
+                child: Stack(
+                  alignment: Alignment.center,
                   children: [
-                    Text(
-                      ratio == null ? '—' : '${(ratio * 100).round()}%',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w800,
+                    SizedBox(
+                      width: 88,
+                      height: 88,
+                      child: CircularProgressIndicator(
+                        value: ratio ?? 0,
+                        strokeWidth: 9,
+                        backgroundColor: theme.colorScheme.outlineVariant,
+                        valueColor: AlwaysStoppedAnimation(
+                          ratio == null
+                              ? theme.colorScheme.outline
+                              : AppTokens.complianceColor((ratio * 100)),
+                        ),
                       ),
                     ),
-                    Text(
-                      'today',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          ratio == null ? '—' : '${(ratio * 100).round()}%',
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        Text(
+                          'day',
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(width: AppTokens.spaceLg),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Routine task compliance', style: theme.textTheme.titleMedium),
-                const SizedBox(height: 4),
-                Text(
-                  ratio == null
-                      ? 'No tasks due today for your depot.'
-                      : '$done of $due completed. Open Tasks to catch up.',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
+              ),
+              const SizedBox(width: AppTokens.spaceLg),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Routine task compliance', style: theme.textTheme.titleMedium),
+                    const SizedBox(height: 4),
+                    Text(
+                      due == 0
+                          ? 'No tasks due'
+                          : '$done of $due completed',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    if (due > 0) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        'Open tasks for this day',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),
     );
+  }
+
+  bool _isToday(DateTime d) {
+    final n = DateTime.now();
+    return d.year == n.year && d.month == n.month && d.day == n.day;
+  }
+
+  String _fmtDate(DateTime d) {
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return '${d.day} ${months[d.month - 1]} ${d.year}';
   }
 }
 
@@ -395,6 +467,7 @@ class _KpiGridSkeleton extends StatelessWidget {
           SkeletonCard(),
           SkeletonCard(),
           SkeletonCard(),
+          SkeletonCard(),
         ],
       );
 }
@@ -406,7 +479,7 @@ class _QuickActionRow extends StatelessWidget {
   static const _labels = <({String label, String route, IconData icon})>[
     (label: 'Permits', route: Routes.permits, icon: Icons.approval_outlined),
     (label: 'Inspections', route: Routes.inspections, icon: Icons.checklist_outlined),
-    (label: 'Truck checks', route: Routes.truckInspections, icon: Icons.local_shipping_outlined),
+    (label: 'Truck checks', route: Routes.customerTruckInspection, icon: Icons.local_shipping_outlined),
     (label: 'Incidents', route: Routes.incidents, icon: Icons.report_gmailerrorred_outlined),
     (label: 'Hazards', route: Routes.hazards, icon: Icons.warning_amber_rounded),
     (label: 'CAPA', route: Routes.capa, icon: Icons.build_outlined),
@@ -533,3 +606,80 @@ String _weekday(DateTime d) => const ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 
 String _month(DateTime d) =>
     const ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.month - 1];
 String _p(int n) => n.toString().padLeft(2, '0');
+
+/// Prompts for reasons when daily tasks are incomplete after 5:00 PM.
+class _DailyReasonPrompt extends ConsumerStatefulWidget {
+  const _DailyReasonPrompt();
+
+  @override
+  ConsumerState<_DailyReasonPrompt> createState() => _DailyReasonPromptState();
+}
+
+class _DailyReasonPromptState extends ConsumerState<_DailyReasonPrompt> {
+  bool _checked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _maybePrompt());
+  }
+
+  Future<void> _maybePrompt() async {
+    if (_checked || !mounted) return;
+    _checked = true;
+    final now = DateTime.now();
+    if (now.hour < 17) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    final key = 'incomplete_reasons_${now.year}-${now.month}-${now.day}';
+    if (prefs.containsKey(key)) return;
+
+    final counts = await ref.read(routineTaskRepositoryProvider).complianceForDay(now);
+    if (counts.due == 0 || counts.done >= counts.due) return;
+
+    if (!mounted) return;
+    HapticFeedback.mediumImpact();
+    final controller = TextEditingController();
+    final submitted = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Incomplete tasks'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Have you completed all possible tasks for today? If not, please provide reasons for any incomplete tasks.',
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              maxLines: 4,
+              decoration: const InputDecoration(
+                hintText: 'Reasons for incomplete tasks…',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Submit'),
+          ),
+        ],
+      ),
+    );
+
+    if (submitted == true) {
+      await prefs.setString(key, controller.text.trim());
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => const SizedBox.shrink();
+}

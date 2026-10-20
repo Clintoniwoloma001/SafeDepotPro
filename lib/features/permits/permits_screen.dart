@@ -2,9 +2,12 @@
 // Designed and developed by Clinton Iwoloma — The Imaginr, CEO, Flatra Tech Ltd.
 // Proprietary and confidential. Unauthorized copying, modification, distribution or reuse is prohibited.
 // Contact: +2349025975247
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../core/router/routes.dart';
 import '../../data/models/enums.dart';
 import '../../data/models/workflows.dart';
 import '../../providers/providers.dart';
@@ -12,11 +15,6 @@ import '../shared/ui_kit.dart';
 import '../../data/repositories/auth_repository.dart';
 
 /// Permit approvals.
-///
-/// Read-only for the mobile app: permits are complex multi-section documents
-/// that are authored in the web console, and duplicating that authoring on a
-/// phone is how half-populated permits get approved. The phone job is review
-/// and decision, which is exactly what a supervisor does in the field.
 final permitsProvider = FutureProvider((ref) async {
   return ref.read(permitRepositoryProvider).listPermits();
 });
@@ -27,9 +25,15 @@ class PermitsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final permits = ref.watch(permitsProvider);
+    final profile = ref.watch(profileProvider).profile;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Permit approvals')),
+      appBar: AppBar(title: const Text('Safety & Inspections')),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => GoRouter.of(context).push(Routes.inspectionsTypes),
+        icon: const Icon(Icons.add),
+        label: const Text('New Inspection'),
+      ),
       body: AsyncListView(
         value: permits,
         loadingMessage: 'Loading permits…',
@@ -78,14 +82,11 @@ class _PermitCardState extends ConsumerState<PermitCard> {
       if (status == PermitStatus.approved) {
         await repo.approve(widget.permit.id, profile.id);
       } else {
-        await repo.reject(widget.permit.id, profile.id, reason!);
+        await repo.reject(widget.permit.id, profile.id, reason ?? '');
       }
+
       if (!mounted) return;
-      ref.invalidate(permitsProvider);
-      ref.invalidate(dashboardCountsProvider);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Permit ${status.name}.')),
-      );
+      ref.refresh(permitsProvider);
     } catch (e) {
       if (!mounted) return;
       setState(() => _error = readableError(e));
@@ -94,29 +95,22 @@ class _PermitCardState extends ConsumerState<PermitCard> {
     }
   }
 
-  Future<String?> _askForReason() {
-    final controller = TextEditingController();
+  Future<String?> _askForReason() async {
     return showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Reject this permit'),
-        content: TextField(
-          controller: controller,
-          minLines: 2,
-          maxLines: 4,
-          autofocus: true,
+        title: const Text('Rejection Reason'),
+        content: TextFormField(
           decoration: const InputDecoration(
-            labelText: 'Reason (required)',
-            hintText: 'Explain what must change before this can be approved.',
+            hintText: 'Reason for rejection',
+            border: OutlineInputBorder(),
           ),
+          maxLines: 3,
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
           FilledButton(
-            onPressed: () {
-              final text = controller.text.trim();
-              Navigator.pop(ctx, text.isEmpty ? null : text);
-            },
+            onPressed: () => Navigator.pop(ctx, 'Rejected by reviewer'),
             child: const Text('Reject'),
           ),
         ],
@@ -126,82 +120,73 @@ class _PermitCardState extends ConsumerState<PermitCard> {
 
   @override
   Widget build(BuildContext context) {
-    final p = widget.permit;
+    final permit = widget.permit;
     final theme = Theme.of(context);
-    final canDecide = p.status.isPending;
+    final statusColor = permit.status == PermitStatus.approved
+        ? Colors.green
+        : permit.status == PermitStatus.rejected
+            ? Colors.red
+            : Colors.orange;
 
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      child: ListTile(
+        title: Text(permit.permitNumber, style: theme.textTheme.titleMedium),
+        subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(p.jobTitle, style: theme.textTheme.titleMedium),
-                ),
-                StatusChip.permit(p.status),
-              ],
-            ),
             const SizedBox(height: 4),
             Text(
-              '${p.permitNumber} · ${p.permitType ?? 'Permit'}',
-              style: theme.textTheme.labelMedium?.copyWith(
+              'Job: ${permit.jobTitle}',
+              style: theme.textTheme.bodySmall,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              '${permit.location ?? 'Site'} · ${permit.status.wire}',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: statusColor,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              _formatDateTime(permit.startDatetime),
+              style: theme.textTheme.labelSmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
-            if (p.startDatetime != null) ...[
-              const SizedBox(height: 6),
-              Text(
-                'Starts ${_formatDateTime(p.startDatetime!)}',
-                style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.outline),
+          ],
+        ),
+        trailing: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ElevatedButton(
+              onPressed: _working ? null : () => _decide(PermitStatus.approved),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                foregroundColor: Colors.white,
+                minimumSize: const Size(70, 32),
               ),
-            ],
-            if (p.location != null) ...[
-              const SizedBox(height: 2),
-              Text(
-                'Location: ${p.location}',
-                style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.outline),
+              child: const Text('Approve', style: TextStyle(fontSize: 12)),
+            ),
+            const SizedBox(height: 6),
+            ElevatedButton(
+              onPressed: _working ? null : () => _decide(PermitStatus.rejected),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                minimumSize: const Size(70, 32),
               ),
-            ],
-            if (p.rejectionReason != null) ...[
-              const SizedBox(height: 10),
-              InlineError('Rejected: ${p.rejectionReason}'),
-            ],
-            if (_error != null) ...[
-              const SizedBox(height: 10),
-              InlineError(_error!),
-            ],
-            if (canDecide) ...[
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: _working ? null : () => _decide(PermitStatus.rejected),
-                      icon: const Icon(Icons.close, size: 18),
-                      label: const Text('Reject'),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: FilledButton.icon(
-                      onPressed: _working ? null : () => _decide(PermitStatus.approved),
-                      icon: const Icon(Icons.check, size: 18),
-                      label: const Text('Approve'),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+              child: const Text('Reject', style: TextStyle(fontSize: 12)),
+            ),
           ],
         ),
       ),
     );
   }
-}
 
-String _formatDateTime(DateTime d) =>
-    '${d.year}-${_p(d.month)}-${_p(d.day)} ${_p(d.hour)}:${_p(d.minute)}';
-String _p(int n) => n.toString().padLeft(2, '0');
+  String _formatDateTime(DateTime? d) {
+    if (d == null) return '-';
+    return '${d.year}-${_p(d.month)}-${_p(d.day)} ${_p(d.hour)}:${_p(d.minute)}';
+  }
+  String _p(int n) => n.toString().padLeft(2, '0');
+}

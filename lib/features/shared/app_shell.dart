@@ -276,7 +276,7 @@ const List<QuickAction> _quickActions = [
   QuickAction(label: 'Report hazard', icon: Icons.warning_amber_rounded, route: '/hazards', flagKey: 'hazards'),
   QuickAction(label: 'Toolbox talk', icon: Icons.groups_outlined, route: '/toolbox', flagKey: 'toolbox_talks'),
   QuickAction(label: 'Request permit', icon: Icons.approval_outlined, route: Routes.permits, flagKey: 'permits'),
-  QuickAction(label: 'Truck inspection', icon: Icons.local_shipping_outlined, route: '/truck-inspections', flagKey: 'truck_inspections'),
+  QuickAction(label: 'Customer Truck Inspection', icon: Icons.local_shipping_outlined, route: Routes.customerTruckInspection, flagKey: 'truck_inspections'),
   QuickAction(label: 'Shift handover', icon: Icons.swap_horiz_rounded, route: '/shift-handover', flagKey: 'shift_handover'),
 ];
 

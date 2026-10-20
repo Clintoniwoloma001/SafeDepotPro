@@ -283,7 +283,7 @@ class _AddUserDialogState extends ConsumerState<_AddUserDialog> {
                 initialValue: _selectedRole,
                 decoration: const InputDecoration(labelText: 'Role'),
                 items: UserRole.values
-                    .map((r) => DropdownMenuItem(
+                    .where((r) => r != UserRole.superadmin).map((r) => DropdownMenuItem(
                           value: r,
                           child: Text(r.label),
                         ))
@@ -416,7 +416,7 @@ class _EditUserDialogState extends ConsumerState<_EditUserDialog> {
                 initialValue: _selectedRole,
                 decoration: const InputDecoration(labelText: 'Role'),
                 items: UserRole.values
-                    .map((r) => DropdownMenuItem(
+                    .where((r) => r != UserRole.superadmin).map((r) => DropdownMenuItem(
                           value: r,
                           child: Text(r.label),
                         ))

@@ -50,7 +50,7 @@ class InspectionsScreen extends ConsumerWidget {
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.go(Routes.inspectionsRun),
+        onPressed: () => context.go(Routes.inspectionsTypes),
         icon: const Icon(Icons.add),
         label: const Text('New inspection'),
       ),

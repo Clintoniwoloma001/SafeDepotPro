@@ -29,6 +29,59 @@ class DepotRepository {
     return rows.map<Depot>(Depot.fromJson).toList(growable: false);
   }
 
+  /// Creates a depot. Requires an admin-capable session; `depots_insert` RLS
+  /// rejects the write otherwise and the caller surfaces the error.
+  Future<Depot> createDepot({
+    required String code,
+    required String name,
+    String? city,
+    String? region,
+    double? latitude,
+    double? longitude,
+    int radiusMeters = 50,
+    bool isActive = true,
+  }) async {
+    final row = await _client
+        .from(table)
+        .insert({
+          'code': code.trim().toUpperCase(),
+          'name': name.trim(),
+          'city': city?.trim(),
+          'region': region?.trim(),
+          'latitude': latitude,
+          'longitude': longitude,
+          'allowed_radius_meters': radiusMeters,
+          'is_active': isActive,
+        })
+        .select()
+        .single();
+    return Depot.fromJson(row);
+  }
+
+  /// Updates a depot's geofence (and the human-editable descriptive fields).
+  Future<void> updateDepotGeofence({
+    required String id,
+    required double latitude,
+    required double longitude,
+    required int radiusMeters,
+    String? name,
+    String? city,
+    String? region,
+    bool? isActive,
+  }) async {
+    final updates = <String, dynamic>{
+      'latitude': latitude,
+      'longitude': longitude,
+      'allowed_radius_meters': radiusMeters,
+      'updated_at': DateTime.now().toUtc().toIso8601String(),
+    };
+    if (name != null) updates['name'] = name.trim();
+    if (city != null) updates['city'] = city.trim();
+    if (region != null) updates['region'] = region.trim();
+    if (isActive != null) updates['is_active'] = isActive;
+    await _client.from(table).update(updates).eq('id', id);
+  }
+
   Future<List<DepotZone>> listZones(String depotId) async {
     final rows = await _client
         .from('depot_zones')

@@ -70,11 +70,21 @@ final opsRepositoryProvider = Provider(
   (ref) => OpsRepository(ref.watch(supabaseClientProvider)),
 );
 
-/// Trucks visible to the signed-in user's depot.
+/// Trucks visible to the signed-in user. Country head / super admin see all.
 final trucksProvider = FutureProvider<List<Truck>>((ref) async {
   final profile = ref.watch(profileProvider).profile;
-  if (profile?.depotId == null) return const [];
-  return ref.read(truckRepositoryProvider).listTrucks(depotId: profile!.depotId);
+  if (profile == null) return const [];
+  if (profile.role.canSeeAllDepots) {
+    return ref.read(truckRepositoryProvider).listTrucks();
+  }
+  if (profile.depotId == null) return const [];
+  return ref.read(truckRepositoryProvider).listTrucks(depotId: profile.depotId);
+});
+
+/// All depots the signed-in user may read, active and inactive, for the
+/// depot & geofence settings module.
+final depotListProvider = FutureProvider<List<Depot>>((ref) async {
+  return ref.read(depotRepositoryProvider).listDepots(activeOnly: false);
 });
 
 /// Shift handovers for the signed-in user's depot.
@@ -91,11 +101,14 @@ final manHoursProvider = FutureProvider<List<ManHours>>((ref) async {
   return ref.read(opsRepositoryProvider).listManHours(depotId: profile!.depotId);
 });
 
-/// Recent truck inspections for the signed-in user's depot.
+/// Recent truck inspections. Country head / super admin see all; others own only.
 final truckInspectionsProvider = FutureProvider<List<TruckInspection>>((ref) async {
   final profile = ref.watch(profileProvider).profile;
-  if (profile?.depotId == null) return const [];
-  return ref.read(opsRepositoryProvider).listTruckInspections(depotId: profile!.depotId);
+  if (profile == null) return const [];
+  if (profile.role.canSeeAllDepots) {
+    return ref.read(opsRepositoryProvider).listTruckInspections();
+  }
+  return ref.read(opsRepositoryProvider).listTruckInspections(inspectedBy: profile.id);
 });
 
 /// Session state. Single source of truth for auth; drives the router redirect.
@@ -262,6 +275,30 @@ final dashboardCountsProvider = FutureProvider<DashboardCounts>((ref) async {
 );
 });
 
+/// Open routine tasks due today for the signed-in user's depot.
+final openTasksProvider = FutureProvider<List<RoutineTask>>((ref) async {
+  final profile = ref.watch(profileProvider).profile;
+  if (profile?.depotId == null) return const [];
+  return ref.read(routineTaskRepositoryProvider).dueToday(DateTime.now());
+});
+
+/// Routine tasks completed in the current period for the signed-in user's depot.
+final completedTasksProvider = FutureProvider<List<RoutineTask>>((ref) async {
+  final profile = ref.watch(profileProvider).profile;
+  if (profile?.depotId == null) return const [];
+  return ref.read(routineTaskRepositoryProvider).completedTasks(DateTime.now());
+});
+
+/// Open permits (submitted, awaiting approval) for the signed-in user's depot.
+final openPermitsProvider = FutureProvider<List<Permit>>((ref) async {
+  final profile = ref.watch(profileProvider).profile;
+  if (profile?.depotId == null) return const [];
+  return ref.read(permitRepositoryProvider).listPermits(
+    status: PermitStatus.submitted,
+    limit: 50,
+  );
+});
+
 /// All users (profiles) for user management.
 /// Only visible to SUPERADMIN/COUNTRY_HEAD (RLS enforced).
 final usersProvider = FutureProvider<List<Profile>>((ref) async {
@@ -269,4 +306,51 @@ final usersProvider = FutureProvider<List<Profile>>((ref) async {
   if (profile == null) return const [];
   if (!profile.role.canSeeAllDepots) return const [];
   return ref.read(authRepositoryProvider).listAllUsers();
+});
+
+/// Global truck inspection templates (type = GLOBAL).
+final globalTruckTemplatesProvider = FutureProvider<List<TruckInspectionTemplate>>((ref) async {
+  return ref.read(opsRepositoryProvider).listTruckInspectionTemplates(
+    type: TruckTemplateType.global,
+    activeOnly: true,
+  );
+});
+
+/// Inspection types available for starting new inspections.
+final inspectionTypesProvider = FutureProvider<List<InspectionType>>((ref) async {
+  return ref.read(opsRepositoryProvider).listInspectionTypes(activeOnly: true);
+});
+
+/// Truck inspection template items for a specific template.
+final truckTemplateItemsProvider = FutureProvider.family<List<TruckInspectionTemplateItem>, String>((ref, templateId) async {
+  return ref.read(opsRepositoryProvider).listTruckInspectionTemplateItems(templateId: templateId, activeOnly: true);
+});
+
+/// Pending task reminders for the signed-in user's depot.
+final pendingTaskRemindersProvider = FutureProvider<List<TaskReminder>>((ref) async {
+  final profile = ref.watch(profileProvider).profile;
+  if (profile?.depotId == null) return const [];
+  // Get reminders for tasks in this depot's routine tasks
+  return ref.read(opsRepositoryProvider).listTaskReminders(
+    status: ReminderStatus.pending,
+    limit: 200,
+  );
+});
+
+/// All task reminders for Country Head dashboard.
+final allTaskRemindersProvider = FutureProvider<List<TaskReminder>>((ref) async {
+  final profile = ref.watch(profileProvider).profile;
+  if (profile == null) return const [];
+  if (!profile.role.canSeeAllDepots) return const [];
+  return ref.read(opsRepositoryProvider).listTaskReminders(limit: 500);
+});
+
+/// Toolbox talks for a specific depot.
+final toolboxTalksProvider = FutureProvider.family<List<ToolboxTalk>, String>((ref, depotId) async {
+  return ref.read(opsRepositoryProvider).listToolboxTalks(depotId: depotId, limit: 50);
+});
+
+/// Users in a depot, for shift handover incoming-staff selection.
+final incomingUsersByDepotProvider = FutureProvider.family<List<Profile>, String>((ref, depotId) async {
+  return ref.read(opsRepositoryProvider).listUsersByDepot(depotId);
 });

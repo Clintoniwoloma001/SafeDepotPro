@@ -5,6 +5,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shorebird_code_push/shorebird_code_push.dart';
 
 import 'core/branding/build_integrity.dart';
 import 'core/branding/unofficial_build_screen.dart';
@@ -13,9 +14,14 @@ import 'core/config/config_error_screen.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'data/supabase/supabase_service.dart';
+import 'core/notifications/daily_task_notifications.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Shorebird for OTA updates
+  final shorebird = ShorebirdUpdater();
+  shorebird.checkForUpdate();
 
   // A missing --dart-define-from-file must never crash. Show a clear screen and
   // never attempt to initialise Supabase without credentials.
@@ -36,6 +42,9 @@ Future<void> main() async {
     url: EnvConfig.supabaseUrl,
     publishableKey: EnvConfig.supabasePublishableKey,
   );
+
+  // Local reminders for incomplete daily tasks.
+  await DailyTaskNotifications.initialize();
 
   // Integrity call site 1 of 3 (see build_integrity.dart).
   //

@@ -86,6 +86,14 @@ abstract final class Json {
     }
     return const [];
   }
+
+  static List<dynamic> listOr(Map<String, dynamic> j, String key) {
+    final v = j[key];
+    if (v is List) return v;
+    return const [];
+  }
+
+  static bool? boolOrNull(Map<String, dynamic> j, String key) => j[key] as bool?;
 }
 
 /// A row from `public.profiles` (see 0003_profiles_and_personnel.sql).
@@ -160,6 +168,7 @@ class Depot {
     this.region,
     this.latitude,
     this.longitude,
+    this.allowedRadiusMeters = 50,
     this.isActive = true,
     required this.createdAt,
     required this.updatedAt,
@@ -172,22 +181,30 @@ class Depot {
   final String? region;
   final double? latitude;
   final double? longitude;
+
+  /// Geofence radius in metres enforced when an inspector records a check.
+  final int allowedRadiusMeters;
   final bool isActive;
   final DateTime createdAt;
   final DateTime updatedAt;
 
   factory Depot.fromJson(Map<String, dynamic> j) => Depot(
-    id: Json.str(j, 'id'),
-    code: Json.str(j, 'code'),
-    name: Json.str(j, 'name'),
-    city: Json.strOrNull(j, 'city'),
-    region: Json.strOrNull(j, 'region'),
-    latitude: Json.doubleOrNull(j, 'latitude'),
-    longitude: Json.doubleOrNull(j, 'longitude'),
-    isActive: Json.boolOr(j, 'is_active', fallback: true),
-    createdAt: DateTime.parse(Json.str(j, 'created_at')),
-    updatedAt: DateTime.parse(Json.str(j, 'updated_at')),
-  );
+        id: Json.str(j, 'id'),
+        code: Json.str(j, 'code'),
+        name: Json.str(j, 'name'),
+        city: Json.strOrNull(j, 'city'),
+        region: Json.strOrNull(j, 'region'),
+        latitude: Json.doubleOrNull(j, 'latitude'),
+        longitude: Json.doubleOrNull(j, 'longitude'),
+        allowedRadiusMeters:
+            Json.intOr(j, 'allowed_radius_meters', fallback: 50),
+        isActive: Json.boolOr(j, 'is_active', fallback: true),
+        createdAt: DateTime.parse(Json.str(j, 'created_at')),
+        updatedAt: DateTime.parse(Json.str(j, 'updated_at')),
+      );
+
+  bool get hasCoordinates =>
+      latitude != null && longitude != null && latitude!.abs() <= 90 && longitude!.abs() <= 180;
 
   String get displayName => '$code — $name';
 }

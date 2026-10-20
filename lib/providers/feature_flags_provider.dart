@@ -121,7 +121,7 @@ class FeatureFlagsNotifier extends Notifier<AsyncValue<Set<String>>> {
 }
 
 /// Build number currently running, from the app manifest.
-final installedBuildProvider = Provider<int>((ref) => 1);
+final installedBuildProvider = Provider<int>((ref) => 9);
 
 /// Full flag rows for the settings screen.
 final allFeatureFlagsProvider = FutureProvider<List<FeatureFlag>>((ref) async {

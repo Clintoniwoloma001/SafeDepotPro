@@ -4,6 +4,7 @@
 // Contact: +2349025975247
 import 'dart:io';
 import 'dart:typed_data';
+import 'dart:convert';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -72,6 +73,26 @@ class StorageRepository {
     await _client.storage
         .from(bucket)
         .remove(paths.where((p) => !p.startsWith('http')).toList());
+  }
+
+  Future<Uint8List?> downloadBytes(String bucket, String? path) async {
+    if (path == null || path.isEmpty) return null;
+    if (path.startsWith('data:')) {
+      final comma = path.indexOf(',');
+      if (comma != -1) {
+        try {
+          return base64Decode(path.substring(comma + 1));
+        } catch (_) {
+          return null;
+        }
+      }
+      return null;
+    }
+    try {
+      return await _client.storage.from(bucket).download(path);
+    } catch (_) {
+      return null;
+    }
   }
 
   /// Depot-prefixed object path; also unsafe characters are stripped so the

@@ -39,6 +39,8 @@ class SignaturePad extends ConsumerStatefulWidget {
 class _SignaturePadState extends ConsumerState<SignaturePad> {
   bool _uploading = false;
   String? _savedPath;
+  bool _ready = false;
+  final GlobalKey _signatureKey = GlobalKey();
 
   @override
   void initState() {
@@ -57,6 +59,7 @@ class _SignaturePadState extends ConsumerState<SignaturePad> {
       height: widget.height.toInt() * 2,
     );
     if (bytes == null || bytes.isEmpty) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please sign before saving.')),
       );
@@ -92,7 +95,10 @@ class _SignaturePadState extends ConsumerState<SignaturePad> {
 
   void _clear() {
     widget.controller.clear();
-    setState(() => _savedPath = null);
+    setState(() {
+      _savedPath = null;
+      _ready = false;
+    });
     widget.onSaved('');
   }
 
@@ -100,53 +106,72 @@ class _SignaturePadState extends ConsumerState<SignaturePad> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final hasSignature = widget.controller.isNotEmpty || _savedPath != null;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(widget.label, style: theme.textTheme.bodySmall),
-        const SizedBox(height: 4),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: SizedBox(
-            height: widget.height,
-            child: Signature(
-              controller: widget.controller,
-              backgroundColor: Colors.grey.shade100,
-              placeholder: Center(
-                child: Text(
-                  widget.label,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+    final showSave = _ready || _savedPath != null;
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onTapDown: (details) {
+        final box = _signatureKey.currentContext?.findRenderObject() as RenderBox?;
+        if (box != null) {
+          final local = box.globalToLocal(details.globalPosition);
+          final size = box.size;
+          final inside = local.dx >= 0 &&
+              local.dx <= size.width &&
+              local.dy >= 0 &&
+              local.dy <= size.height;
+          if (!inside && widget.controller.isNotEmpty && !_ready) {
+            setState(() => _ready = true);
+          }
+        }
+      },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(widget.label, style: theme.textTheme.bodySmall),
+          const SizedBox(height: 4),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: SizedBox(
+              height: widget.height,
+              child: Signature(
+                key: _signatureKey,
+                controller: widget.controller,
+                backgroundColor: Colors.grey.shade100,
+                placeholder: Center(
+                  child: Text(
+                    widget.label,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
               ),
             ),
           ),
-        ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            if (hasSignature)
-              TextButton.icon(
-                onPressed: _uploading ? null : _clear,
-                icon: const Icon(Icons.refresh, size: 16),
-                label: const Text('Clear'),
-              ),
-            ElevatedButton.icon(
-              onPressed: _uploading || !widget.controller.isNotEmpty ? null : _save,
-              icon: _uploading
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.save, size: 16),
-              label: _uploading ? const Text('Saving…') : const Text('Save signature'),
-            ),
-          ],
-        ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              if (hasSignature)
+                TextButton.icon(
+                  onPressed: _uploading ? null : _clear,
+                  icon: const Icon(Icons.refresh, size: 16),
+                  label: const Text('Clear'),
+                ),
+              if (showSave)
+                ElevatedButton.icon(
+                  onPressed: _uploading || !widget.controller.isNotEmpty ? null : _save,
+                  icon: _uploading
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.save, size: 16),
+                  label: _uploading ? const Text('Saving…') : const Text('Save signature'),
+                ),
+            ],
+          ),
         if (_savedPath != null) ...[
           const SizedBox(height: 8),
           Text(
@@ -157,6 +182,6 @@ class _SignaturePadState extends ConsumerState<SignaturePad> {
           ),
         ],
       ],
-    );
+    ));
   }
 }

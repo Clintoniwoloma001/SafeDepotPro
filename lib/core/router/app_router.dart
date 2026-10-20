@@ -10,25 +10,37 @@ import '../../providers/providers.dart';
 import '../../features/about/about_screen.dart';
 import '../../features/auth/login_screen.dart';
 import '../../features/auth/signup_screen.dart';
+import '../../features/audit/audit_screen.dart';
 import '../../features/capa/capa_screen.dart';
 import '../../features/dashboard/dashboard_screen.dart';
 import '../../features/incidents/incidents_screens.dart';
+import '../../features/inspections/checklist_from_inspection_type_screen.dart';
 import '../../features/inspections/inspection_runner_screen.dart';
+import '../../features/inspections/inspection_types_screen.dart';
 import '../../features/inspections/inspections_screen.dart';
 import '../../features/manhours/manhours_screen.dart';
+import '../../features/assets/assets_screen.dart';
+import '../../features/personnel/personnel_screen.dart';
+import '../../features/stand_in/stand_in_screen.dart';
+import '../../features/platform_export/platform_export_screen.dart';
 import '../../features/notifications/notifications_screen.dart';
-import '../../features/permits/permits_screen.dart';
 import '../../features/profile/profile_screen.dart';
+import '../../features/permits/permits_screen.dart';
 import '../../features/shift_handover/shift_handover_screen.dart';
-import '../../features/truck_inspections/truck_inspections_screen.dart';
-import '../../features/audit/audit_screen.dart';
+import '../../features/truck_inspections/customer_truck_inspection_screen.dart';
+import '../../features/checklist_builder/checklist_builder_screen.dart';
+import '../../features/tasks/task_completion_screen.dart';
 import '../../features/tasks/tasks_screen.dart';
 import '../../features/user_management/user_management_screen.dart';
+import '../../features/toolbox_talks/toolbox_talks_screen.dart';
+import '../../features/task_reminders/task_reminders_screen.dart';
+import '../../features/settings/settings_screen.dart';
 import '../../features/shared/app_shell.dart';
 import '../../features/shared/components.dart';
 import '../../features/shared/flutter_splash.dart';
 import '../../features/more/more_screen.dart';
 import '../../features/settings/appearance_screen.dart';
+import '../../features/settings/depot_geofence_settings_screen.dart';
 import 'routes.dart';
 
 /// The application router.
@@ -92,8 +104,23 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const InspectionsScreen(),
           ),
           GoRoute(
+            path: Routes.inspectionsTypes,
+            builder: (context, state) => const InspectionTypesScreen(),
+          ),
+          GoRoute(
             path: Routes.inspectionsRun,
             builder: (context, state) => const InspectionRunnerScreen(),
+          ),
+          GoRoute(
+            path: Routes.checklistFromType,
+            builder: (context, state) {
+              final typeId = state.uri.queryParameters['typeId'] ?? '';
+              final typeName = state.uri.queryParameters['name'] ?? '';
+              return ChecklistFromInspectionTypeScreen(
+                inspectionTypeId: typeId,
+                inspectionTypeName: typeName,
+              );
+            },
           ),
           GoRoute(
             path: Routes.capa,
@@ -128,11 +155,14 @@ final routerProvider = Provider<GoRouter>((ref) {
           // ---- Tasks (P2) ------------------------------------------------
           GoRoute(
             path: Routes.tasks,
-            builder: (context, state) => ComingSoonScreen.gated(
-              flagKey: 'routine_tasks',
-              title: 'Routine Tasks',
-              child: const TasksScreen(),
-            ),
+            builder: (context, state) => const TasksScreen(),
+          ),
+          GoRoute(
+            path: '${Routes.tasks}/complete',
+            builder: (context, state) {
+              final taskId = state.uri.queryParameters['task'] ?? '';
+              return TaskCompletionFormScreen(taskId: taskId);
+            },
           ),
 
           // ---- Safety tab grid (P3) ---------------------------------------
@@ -145,18 +175,14 @@ final routerProvider = Provider<GoRouter>((ref) {
             ),
           ),
           GoRoute(
-            path: Routes.truckInspections,
-            builder: (context, state) => const TruckInspectionsScreen(),
+            path: Routes.customerTruckInspection,
+            builder: (context, state) => const CustomerTruckInspectionScreen(),
           ),
 
           // ---- Operations (P2/P4) ------------------------------------------
           GoRoute(
             path: Routes.toolbox,
-            builder: (context, state) => ComingSoonScreen.gated(
-              flagKey: 'toolbox_talks',
-              title: 'Toolbox Talks',
-              child: const _Placeholder('Toolbox Talks'),
-            ),
+            builder: (context, state) => const ToolboxTalksScreen(),
           ),
           GoRoute(
             path: Routes.handover,
@@ -170,11 +196,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           // ---- Assets (P5) -------------------------------------------------
           GoRoute(
             path: Routes.assets,
-            builder: (context, state) => ComingSoonScreen.gated(
-              flagKey: 'assets',
-              title: 'Equipment & Assets',
-              child: const _Placeholder('Assets'),
-            ),
+            builder: (context, state) => const AssetsScreen(),
           ),
 
           // ---- Admin, role-gated -------------------------------------------
@@ -182,56 +204,37 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: Routes.personnel,
             builder: (context, state) => RoleGuard(
               allowed: (r) => r.isAdmin,
-              child: ComingSoonScreen.gated(
-                flagKey: 'personnel',
-                title: 'Personnel',
-                child: const _Placeholder('Personnel'),
-              ),
+              child: const PersonnelScreen(),
             ),
           ),
           GoRoute(
             path: Routes.depots,
             builder: (context, state) => RoleGuard(
               allowed: (r) => r.isAdmin,
-              child: ComingSoonScreen.gated(
-                flagKey: 'depots',
-                title: 'Depots',
-                child: const _Placeholder('Depots'),
-              ),
+              child: const DepotGeofenceSettingsScreen(),
             ),
+          ),
+          GoRoute(
+            path: Routes.depotGeofence,
+            builder: (context, state) => const DepotGeofenceSettingsScreen(),
           ),
           GoRoute(
             path: Routes.checklistBuilder,
             builder: (context, state) => RoleGuard(
               allowed: (r) => r.isAdmin,
-              child: ComingSoonScreen.gated(
-                flagKey: 'checklist_builder',
-                title: 'Checklist Builder',
-                child: const _Placeholder('Checklist Builder'),
-              ),
+              child: const ChecklistBuilderScreen(),
             ),
           ),
           GoRoute(
             path: Routes.standIn,
             builder: (context, state) => RoleGuard(
               allowed: (r) => r.isAdmin,
-              child: ComingSoonScreen.gated(
-                flagKey: 'stand_in',
-                title: 'DSO Stand-In',
-                child: const _Placeholder('DSO Stand-In'),
-              ),
+              child: const StandInScreen(),
             ),
           ),
           GoRoute(
             path: Routes.settings,
-            builder: (context, state) => RoleGuard(
-              allowed: (r) => r.isAdmin,
-              child: ComingSoonScreen.gated(
-                flagKey: 'settings',
-                title: 'Settings',
-                child: const _Placeholder('Settings'),
-              ),
-            ),
+            builder: (context, state) => const SettingsScreen(),
           ),
           GoRoute(
             path: Routes.userManagement,
@@ -244,12 +247,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: Routes.platformExport,
             builder: (context, state) => RoleGuard(
               allowed: (r) => r.seesAllDepots,
-              child: ComingSoonScreen.gated(
-                flagKey: 'platform_export',
-                title: 'Platform Export',
-                message: 'Only a country head or super admin may export.',
-                child: const _Placeholder('Platform Export'),
-              ),
+              child: const PlatformExportScreen(),
             ),
           ),
 
@@ -258,18 +256,25 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: Routes.appearance,
             builder: (context, state) => const AppearanceScreen(),
           ),
-          GoRoute(
-            path: Routes.assistant,
-            builder: (context, state) => ComingSoonScreen.gated(
-              flagKey: 'ai_copilot',
-              title: 'AI Copilot',
-              child: const _Placeholder('AI Copilot'),
-            ),
-          ),
-          GoRoute(
-            path: Routes.more,
-            builder: (context, state) => const MoreScreen(),
-          ),
+GoRoute(
+             path: Routes.assistant,
+             builder: (context, state) => ComingSoonScreen.gated(
+               flagKey: 'ai_copilot',
+               title: 'AI Copilot',
+               child: const _Placeholder('AI Copilot'),
+             ),
+           ),
+           GoRoute(
+             path: Routes.taskReminders,
+             builder: (context, state) => RoleGuard(
+               allowed: (r) => r.isCountryHead || r.isSuperAdmin,
+               child: const TaskRemindersScreen(),
+             ),
+           ),
+           GoRoute(
+             path: Routes.more,
+             builder: (context, state) => const MoreScreen(),
+           ),
 
         ],
       ),

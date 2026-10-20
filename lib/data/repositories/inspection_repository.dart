@@ -26,7 +26,16 @@ class InspectionRepository {
         .select()
         .order('created_at', ascending: false)
         .limit(limit);
-    return rows.map<Inspection>(Inspection.fromJson).toList(growable: false);
+    final inspections = rows.map<Inspection>(Inspection.fromJson).toList(growable: false);
+    // Only surface inspections that carry valid inspection items or an
+    // active/working checklist. Empty, unconfigured or template-less records
+    // are filtered out.
+    return inspections.where((i) {
+      final hasItems = i.answers.isNotEmpty;
+      final hasChecklist = i.templateId != null && i.templateId!.trim().isNotEmpty;
+      final hasName = i.checklistName.trim().isNotEmpty;
+      return hasName && (hasItems || hasChecklist);
+    }).toList(growable: false);
   }
 
   Future<List<ChecklistTemplate>> listTemplates() async {

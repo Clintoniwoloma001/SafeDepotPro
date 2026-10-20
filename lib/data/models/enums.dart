@@ -25,12 +25,18 @@ enum UserRole {
     orElse: () => UserRole.user,
   );
 
-  /// True for roles that may manage configuration and see every depot.
-  bool get isAdmin =>
-      this == admin || this == countryHead || this == superadmin;
+   /// True for roles that may manage configuration and see every depot.
+   bool get isAdmin =>
+       this == admin || this == countryHead || this == superadmin;
 
-  /// True for roles with full tenant visibility.
-  bool get seesAllDepots => this == countryHead || this == superadmin;
+   /// True for roles that are Country Head or above.
+   bool get isCountryHead => this == countryHead || this == superadmin;
+
+   /// True for roles that are Super Admin.
+   bool get isSuperAdmin => this == superadmin;
+
+   /// True for roles with full tenant visibility.
+   bool get seesAllDepots => this == countryHead || this == superadmin;
 }
 
 enum TaskStatus {

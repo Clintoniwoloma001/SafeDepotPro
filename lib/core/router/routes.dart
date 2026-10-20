@@ -26,7 +26,9 @@ abstract final class Routes {
   static const permits = '/permits';
   static const inspections = '/inspections';
   static const inspectionsRun = '/inspections/run';
-  static const truckInspections = '/truck-inspections';
+  static const inspectionsTypes = '/inspections/types';
+  static const customerTruckInspection = '/customer-truck-inspection';
+  static const checklistFromType = '/inspections/checklist-from-type';
   static const incidents = '/incidents';
   static const hazards = '/hazards';
   static const capa = '/corrective-actions';
@@ -38,11 +40,14 @@ abstract final class Routes {
   static const assets = '/assets';
   static const personnel = '/personnel';
   static const depots = '/depots';
+  static const depotGeofence = '/settings/depots';
+  static const vehiclesManagement = '/management/vehicles';
   static const checklistBuilder = '/checklist-builder';
   static const standIn = '/stand-in';
   static const userManagement = '/users';
   static const platformExport = '/platform-export';
   static const settings = '/settings';
+  static const taskReminders = '/task-reminders';
   static const audit = '/audit';
   static const appearance = '/appearance';
   static const about = '/about';
