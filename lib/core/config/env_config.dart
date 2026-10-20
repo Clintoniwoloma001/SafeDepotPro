@@ -18,7 +18,10 @@ class EnvConfig {
   const EnvConfig._();
 
   /// Supabase project URL, e.g. `https://<ref>.supabase.co`.
-  static const String supabaseUrl = String.fromEnvironment('SUPABASE_URL');
+  static const String supabaseUrl = String.fromEnvironment(
+    'SUPABASE_URL',
+    defaultValue: 'https://pgyxrgolldmiaxazjsjp.supabase.co',
+  );
 
   /// The publishable (formerly "anon") key.
   ///
@@ -30,6 +33,8 @@ class EnvConfig {
   /// database to anyone who unzips the APK.
   static const String supabasePublishableKey = String.fromEnvironment(
     'SUPABASE_PUBLISHABLE_KEY',
+    defaultValue:
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBneXhyZ29sbGRtaWF4YXpqc2pwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk5NzQwMzksImV4cCI6MjEwNTU1MDAzOX0.HoknjXqMXSxoMXCHp2jeD6lBW_WD-_74EQVnk8dUuj4',
   );
 
   /// True when both required values were supplied at build time.
