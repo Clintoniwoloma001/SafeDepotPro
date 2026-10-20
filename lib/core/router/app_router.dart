@@ -63,8 +63,12 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       final isSignedIn = profileState.isSignedIn;
       final isOnLogin = state.matchedLocation == Routes.login;
+      final isOnSignup = state.matchedLocation == Routes.signup;
 
-      if (!isSignedIn) return isOnLogin ? null : Routes.login;
+      if (!isSignedIn) {
+        if (isOnLogin || isOnSignup) return null;
+        return Routes.login;
+      }
       if (isOnLogin) return Routes.home;
       return null;
     },
