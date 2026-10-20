@@ -288,7 +288,7 @@ class _ChecklistItemCard extends StatefulWidget {
 }
 
 class _ChecklistItemCardState extends State<_ChecklistItemCard> {
-  late final _ChecklistItemResult _result;
+  late _ChecklistItemResult _result;
 
   @override
   void initState() {
