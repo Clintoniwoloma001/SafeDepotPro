@@ -109,6 +109,8 @@ class _UserTile extends ConsumerWidget {
               spacing: 8,
               children: [
                 AppChip(label: user.role.label, hue: _roleHue(user.role)),
+                if (!user.isActive)
+                  AppChip(label: 'Pending approval', hue: SemanticHue.warn, dense: true),
                 if (user.depotId != null)
                   AppChip(label: 'Assigned depot', hue: SemanticHue.info, dense: true)
                 else
@@ -128,6 +130,16 @@ class _UserTile extends ConsumerWidget {
                 contentPadding: EdgeInsets.zero,
               ),
             ),
+            if (!user.isActive)
+              const PopupMenuItem(
+                value: 'activate',
+                child: ListTile(
+                  leading: Icon(Icons.check_circle_outline, color: Colors.green),
+                  title: Text('Approve / Activate',
+                      style: TextStyle(color: Colors.green)),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
             if (user.id != ref.read(profileProvider).profile?.id)
               const PopupMenuItem(
                 value: 'deactivate',
@@ -147,6 +159,9 @@ class _UserTile extends ConsumerWidget {
     switch (value) {
       case 'edit':
         _showEditDialog(context, ref, user);
+        break;
+      case 'activate':
+        _showActivateDialog(context, ref, user);
         break;
       case 'deactivate':
         _showDeactivateDialog(context, ref, user);
@@ -193,6 +208,43 @@ class _UserTile extends ConsumerWidget {
               }
             },
             child: const Text('Deactivate'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showActivateDialog(BuildContext context, WidgetRef ref, Profile user) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Approve user?'),
+        content: Text("Activate ${user.displayName}'s account?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              try {
+                await ref.read(authRepositoryProvider).activateUser(user.id);
+                ref.invalidate(usersProvider);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('${user.displayName} approved')),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Failed: ${_readableError(e)}')),
+                  );
+                }
+              }
+            },
+            child: const Text('Approve'),
           ),
         ],
       ),

@@ -135,8 +135,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
             ),
             validator: (v) {
               if (v == null || v.trim().isEmpty) return 'Enter your email address.';
-              if (!v.contains('@') || !v.contains('.')) {
-                return 'Enter a valid email address.';
+              final email = v.trim().toLowerCase();
+              if (!email.endsWith('@ng.huaxin.com')) {
+                return 'Only @ng.huaxin.com email addresses are allowed.';
               }
               return null;
             },

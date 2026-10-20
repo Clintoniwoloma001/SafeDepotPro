@@ -65,7 +65,8 @@ class AuthRepository {
       if (!profile.isActive) {
         await _client.auth.signOut();
         return const AuthFailure(
-          'Your account has been deactivated. Contact your administrator.',
+          'Your account is pending approval by an administrator, or has been '
+          'deactivated. Contact your administrator.',
         );
       }
       return AuthSuccess(profile);
@@ -184,10 +185,19 @@ class AuthRepository {
     }).eq('id', userId);
   }
 
+  /// Activates a pending/deactivated user.
+  /// Only SUPERADMIN/COUNTRY_HEAD/ADMIN can call this (enforced by RLS).
+  Future<void> activateUser(String userId) async {
+    await _client.from(profilesTable).update({
+      'is_active': true,
+      'updated_at': DateTime.now().toUtc().toIso8601String(),
+    }).eq('id', userId);
+  }
+
   /// Lists all users (profiles) for user management.
   /// Only SUPERADMIN/COUNTRY_HEAD can call this (enforced by RLS).
   Future<List<Profile>> listAllUsers() async {
-    final rows = await _client.from(profilesTable).select().order('display_name');
+    final rows = await _client.from(profilesTable).select().order('full_name');
     return rows.map<Profile>(Profile.fromJson).toList(growable: false);
   }
 

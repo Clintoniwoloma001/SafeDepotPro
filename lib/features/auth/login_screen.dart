@@ -4,6 +4,7 @@
 // Contact: +2349025975247
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/branding/app_logo.dart';
 import '../../core/branding/build_integrity.dart';
@@ -11,6 +12,7 @@ import '../../core/branding/credit_footer.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../providers/providers.dart';
 import '../shared/ui_kit.dart';
+import '../../core/router/routes.dart';
 
 /// Email/password sign-in.
 ///
@@ -165,14 +167,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         : const Text('Sign in'),
                   ),
                   const SizedBox(height: 16),
-                  Text(
-                    'Accounts are created by an administrator. If sign-in '
-                    'succeeds but the app reports a missing profile, ask an '
-                    'administrator to complete your account.',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                    textAlign: TextAlign.center,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('No account?',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          )),
+                      TextButton(
+                        onPressed: () => context.go(Routes.signup),
+                        child: const Text('Create account'),
+                      ),
+                    ],
                   ),
                     ],
                   ),
