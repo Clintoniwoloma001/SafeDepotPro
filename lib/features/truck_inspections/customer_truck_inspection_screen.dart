@@ -931,25 +931,6 @@ class _ItemInspectionDialogState extends State<_ItemInspectionDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (item.isCritical)
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.warning, color: Colors.red, size: 20),
-                    const SizedBox(width: 8),
-                    Text('Critical Item - Must Pass',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: Colors.red,
-                          fontWeight: FontWeight.bold,
-                        )),
-                  ],
-                ),
-              ),
               const SizedBox(height: 12),
               if (item.responseType == TruckItemResponseType.passFail) ...[
                 Row(
@@ -1265,13 +1246,6 @@ class _TruckChecklistDialogState extends ConsumerState<_TruckChecklistDialog> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(item.itemText, style: theme.textTheme.titleSmall),
-                    if (item.isCritical) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        'Critical - must pass',
-                        style: theme.textTheme.labelSmall?.copyWith(color: Colors.red),
-                      ),
-                    ],
                     const SizedBox(height: 8),
                     Row(
                       children: [

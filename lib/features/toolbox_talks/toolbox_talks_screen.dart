@@ -666,9 +666,11 @@ class _ToolboxParticipantSheetState
       if (depot != null) depotName = depot.name;
     } catch (_) {}
 
-    final logoBytes = (await rootBundle.load('assets/branding/toolbox_logo.png'))
-        .buffer
-        .asUint8List();
+    final logoData = await rootBundle.load('assets/branding/toolbox_logo.png');
+    final logoBytes = logoData.buffer.asUint8List(
+      logoData.offsetInBytes,
+      logoData.lengthInBytes,
+    );
 
     final sigBytes = <Uint8List?>[];
     for (final p in _participants) {
