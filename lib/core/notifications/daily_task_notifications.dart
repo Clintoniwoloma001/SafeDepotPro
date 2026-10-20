@@ -74,7 +74,7 @@ class DailyTaskNotifications {
         'Some required daily tasks are still incomplete. Please complete them.',
         _localToUtcTz(scheduled),
         details,
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
         matchDateTimeComponents: DateTimeComponents.time,
       );
     }
@@ -91,7 +91,7 @@ class DailyTaskNotifications {
       'Have you completed all possible tasks for today? If not, please provide reasons for any incomplete tasks.',
       _localToUtcTz(fivePm),
       details,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time,
     );
   }

@@ -44,7 +44,11 @@ Future<void> main() async {
   );
 
   // Local reminders for incomplete daily tasks.
-  await DailyTaskNotifications.initialize();
+  try {
+    await DailyTaskNotifications.initialize();
+  } catch (_) {
+    // Notifications are non-critical; never block app startup.
+  }
 
   // Integrity call site 1 of 3 (see build_integrity.dart).
   //

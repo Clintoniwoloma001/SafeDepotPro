@@ -857,7 +857,7 @@ class OpsRepository {
         .select()
         .eq('depot_id', depotId)
         .eq('is_active', true)
-        .order('display_name');
+        .order('full_name');
     return rows.map<Profile>(Profile.fromJson).toList(growable: false);
   }
 }
