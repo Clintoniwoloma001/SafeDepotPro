@@ -96,8 +96,22 @@ class RoutineTaskRepository {
   /// Tasks completed within the current period of [day] for the given frequency.
   Future<List<RoutineTask>> completedTasks(DateTime day) async {
     final all = await listTasks();
-    final completedIds = await _completedTaskIds(day);
-    return all.where((t) => completedIds.contains(t.id)).toList(growable: false);
+    final cutoff = day.subtract(const Duration(days: 400));
+    final rows = await _client
+        .from('task_history')
+        .select('task_id, completed_at')
+        .gte('completed_at', cutoff.toUtc().toIso8601String());
+    final completionsByTask = <String, List<DateTime>>{};
+    for (final r in rows) {
+      final id = r['task_id']?.toString();
+      final dt = DateTime.tryParse(r['completed_at']?.toString() ?? '');
+      if (id == null || dt == null) continue;
+      completionsByTask.putIfAbsent(id, () => []).add(dt.toUtc());
+    }
+    return all.where((t) {
+      final comps = completionsByTask[t.id] ?? const [];
+      return comps.any((c) => _samePeriod(t.frequency, c, day.toUtc()));
+    }).toList(growable: false);
   }
 
   /// Completion records (task + completed_at + completer) for a calendar day.
@@ -135,23 +149,6 @@ class RoutineTaskRepository {
     return records;
   }
 
-  Future<Set<String>> _completedTaskIds(DateTime day) async {
-    final cutoff = day.subtract(const Duration(days: 400));
-    final rows = await _client
-        .from('task_history')
-        .select('task_id, completed_at')
-        .gte('completed_at', cutoff.toUtc().toIso8601String());
-    final result = <String>{};
-    for (final r in rows) {
-      final completedAt = DateTime.tryParse(r['completed_at']?.toString() ?? '');
-      if (completedAt == null) continue;
-      // Match period against the task's frequency; we don't have freq here,
-      // so include all completions in the last 400 days and let callers filter.
-      result.add(r['task_id']?.toString() ?? '');
-    }
-    return result;
-  }
-
   static bool _matchesDate(RoutineTask t, DateTime day) {
     // A task is "due" every day within its active period until completed.
     switch (t.frequency) {
@@ -185,6 +182,18 @@ class RoutineTaskRepository {
   }
 
   /// Compliance counts for a single calendar day (Africa/Lagos).
+  /// Raw task_history rows for a calendar day (UTC boundaries).
+  Future<List<Map<String, dynamic>>> taskHistoryForDay(DateTime day) async {
+    final startLocal = DateTime(day.year, day.month, day.day);
+    final endLocal = startLocal.add(const Duration(days: 1));
+    final rows = await _client
+        .from('task_history')
+        .select('task_id, completed_at, user_id, depot_id, actor_name, photo_paths')
+        .gte('completed_at', startLocal.toUtc().toIso8601String())
+        .lt('completed_at', endLocal.toUtc().toIso8601String());
+    return List<Map<String, dynamic>>.from(rows);
+  }
+
   Future<({int due, int done})> complianceForDay(DateTime day) async {
     final all = await listTasks();
     final daily = all.where((t) => t.isActive && t.frequency == Frequency.daily).toList();
@@ -209,7 +218,6 @@ class RoutineTaskRepository {
   }
 
   static int _isoWeek(DateTime d) {
-    final thursday = d.add(Duration(days: (4 - d.weekday) % 7)); // Monday=1
     // Use Monday-based week number.
     final monday = d.subtract(Duration(days: d.weekday - 1));
     // Week of year by days since first Monday? Simpler: use ordinal.
@@ -599,7 +607,7 @@ class OpsRepository {
     final updates = <String, dynamic>{
       'status': status.wire,
       if (status == ReminderStatus.sent) 'sent_at': DateTime.now().toUtc().toIso8601String(),
-      if (errorMessage != null) 'error_message': errorMessage,
+      'error_message': ?errorMessage,
     };
     await _client.from('task_reminders').update(updates).eq('id', id);
   }

@@ -37,6 +37,7 @@ abstract final class Routes {
   static const toolbox = '/toolbox';
   static const handover = '/shift-handover';
   static const manHours = '/manhours';
+  static const manHourManagement = '/manhour-management';
   static const assets = '/assets';
   static const personnel = '/personnel';
   static const depots = '/depots';

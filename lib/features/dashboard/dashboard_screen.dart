@@ -12,7 +12,7 @@ import '../../core/theme/tokens.dart';
 import '../../data/models/enums.dart';
 import '../../data/models/models.dart';
 import '../../providers/providers.dart';
-import '../../data/repositories/routine_task_repository.dart';
+import '../manhours/man_hour_reminder.dart';
 import '../shared/components.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/services.dart';
@@ -22,6 +22,8 @@ import 'package:flutter/services.dart';
 class _ComplianceDayNotifier extends Notifier<DateTime> {
   @override
   DateTime build() => DateTime.now();
+
+  void setDay(DateTime day) => state = day;
 }
 
 final complianceDayProvider =
@@ -59,6 +61,8 @@ class DashboardScreen extends ConsumerWidget {
           ),
           children: [
             _GreetingHeader(profile: profile),
+            const SizedBox(height: AppTokens.spaceMd),
+            const ManHourReminderCard(),
             const SizedBox(height: AppTokens.spaceLg),
             const _ComplianceRingCard(),
             const SizedBox(height: AppTokens.spaceMd),
@@ -253,7 +257,7 @@ class _ComplianceRingCard extends ConsumerWidget {
 
     return countsAsync.when(
       loading: () => _buildRing(context, theme, null, 0, 0, day, ref),
-      error: (_, __) => _buildRing(context, theme, null, 0, 0, day, ref),
+      error: (_, _) => _buildRing(context, theme, null, 0, 0, day, ref),
       data: (c) {
         final ratio = c.due == 0 ? null : c.done / c.due;
         return _buildRing(context, theme, ratio, c.done, c.due, day, ref);
@@ -262,7 +266,6 @@ class _ComplianceRingCard extends ConsumerWidget {
   }
 
   Widget _buildRing(BuildContext context, ThemeData theme, double? ratio, int done, int due, DateTime day, WidgetRef ref) {
-    final canPrev = true;
     final canNext = !_isToday(day);
     return AppCard(
       padding: const EdgeInsets.all(AppTokens.spaceLg),
@@ -272,8 +275,8 @@ class _ComplianceRingCard extends ConsumerWidget {
             children: [
               IconButton(
                 icon: const Icon(Icons.chevron_left),
-                onPressed: () => ref.read(complianceDayProvider.notifier).state =
-                    day.subtract(const Duration(days: 1)),
+                onPressed: () => ref.read(complianceDayProvider.notifier).setDay(
+                    day.subtract(const Duration(days: 1))),
               ),
               Expanded(
                 child: Center(
@@ -286,7 +289,7 @@ class _ComplianceRingCard extends ConsumerWidget {
                         lastDate: DateTime.now(),
                       );
                       if (picked != null) {
-                        ref.read(complianceDayProvider.notifier).state = picked;
+                        ref.read(complianceDayProvider.notifier).setDay(picked);
                       }
                     },
                     child: Text(_fmtDate(day)),
@@ -296,8 +299,8 @@ class _ComplianceRingCard extends ConsumerWidget {
               IconButton(
                 icon: const Icon(Icons.chevron_right),
                 onPressed: canNext
-                    ? () => ref.read(complianceDayProvider.notifier).state =
-                        day.add(const Duration(days: 1))
+                    ? () => ref.read(complianceDayProvider.notifier).setDay(
+                        day.add(const Duration(days: 1)))
                     : null,
               ),
             ],

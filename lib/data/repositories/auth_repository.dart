@@ -185,6 +185,15 @@ class AuthRepository {
     }).eq('id', userId);
   }
 
+  /// Deletes all non-essential users (everyone except SUPERADMIN and COUNTRY_HEAD).
+  /// Only SUPERADMIN can call this (enforced by RLS).
+  Future<void> deleteNonEssentialUsers() async {
+    await _client
+        .from(profilesTable)
+        .delete()
+        .inFilter('role', ['ADMIN', 'USER']);
+  }
+
   /// Activates a pending/deactivated user.
   /// Only SUPERADMIN/COUNTRY_HEAD/ADMIN can call this (enforced by RLS).
   Future<void> activateUser(String userId) async {

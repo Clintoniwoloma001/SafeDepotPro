@@ -23,6 +23,12 @@ class UserManagementScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('User Management'),
         actions: [
+          if (ref.watch(profileProvider).profile?.role == UserRole.superadmin)
+            IconButton(
+              icon: const Icon(Icons.delete_sweep_outlined),
+              onPressed: () => _showDeleteAllDialog(context, ref),
+              tooltip: 'Delete all non-admin users',
+            ),
           IconButton(
             icon: const Icon(Icons.person_add),
             onPressed: () => _showAddUserDialog(context, ref),
@@ -63,6 +69,46 @@ class UserManagementScreen extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (ctx) => _AddUserDialog(),
+    );
+  }
+
+  void _showDeleteAllDialog(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete all other users?'),
+        content: const Text(
+            'This will permanently delete every user except Super Admins and '
+            'Country Heads. This cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              try {
+                await ref.read(authRepositoryProvider).deleteNonEssentialUsers();
+                ref.invalidate(usersProvider);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Non-essential users deleted')),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Failed: ${_readableError(e)}')),
+                  );
+                }
+              }
+            },
+            child: const Text('Delete all'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -214,39 +260,87 @@ class _UserTile extends ConsumerWidget {
     );
   }
 
-  void _showActivateDialog(BuildContext context, WidgetRef ref, Profile user) {
-    showDialog(
+  Future<void> _showActivateDialog(BuildContext context, WidgetRef ref, Profile user) async {
+    final currentRole = ref.read(profileProvider).profile?.role;
+    final canSeeSuperAdmin = currentRole == UserRole.superadmin;
+    final depots = await ref.read(_allDepotsProvider.future);
+    if (!context.mounted) return;
+
+    UserRole selectedRole = UserRole.user;
+    String? selectedDepotId;
+
+    await showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Approve user?'),
-        content: Text("Activate ${user.displayName}'s account?"),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setState) => AlertDialog(
+          title: const Text('Approve user'),
+          content: SizedBox(
+            width: 400,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Activate ${user.displayName}\'s account and assign role & depot.',
+                    style: Theme.of(ctx).textTheme.bodySmall),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<UserRole>(
+                  initialValue: selectedRole,
+                  decoration: const InputDecoration(labelText: 'Role'),
+                  items: UserRole.values
+                      .where((r) => canSeeSuperAdmin || r != UserRole.superadmin)
+                      .map((r) => DropdownMenuItem(value: r, child: Text(r.label)))
+                      .toList(),
+                  onChanged: (v) => setState(() => selectedRole = v!),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: selectedDepotId,
+                  decoration: const InputDecoration(labelText: 'Depot'),
+                  items: [
+                    const DropdownMenuItem(value: null, child: Text('No depot')),
+                    ...depots.map((d) => DropdownMenuItem(
+                          value: d.id,
+                          child: Text(d.displayName),
+                        )),
+                  ],
+                  onChanged: (v) => setState(() => selectedDepotId = v),
+                ),
+              ],
+            ),
           ),
-          FilledButton(
-            onPressed: () async {
-              Navigator.pop(ctx);
-              try {
-                await ref.read(authRepositoryProvider).activateUser(user.id);
-                ref.invalidate(usersProvider);
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('${user.displayName} approved')),
-                  );
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () async {
+                Navigator.pop(ctx);
+                try {
+                  await ref.read(authRepositoryProvider).updateUserProfile(
+                        userId: user.id,
+                        displayName: user.displayName,
+                        role: selectedRole,
+                        depotId: selectedDepotId,
+                      );
+                  await ref.read(authRepositoryProvider).activateUser(user.id);
+                  ref.invalidate(usersProvider);
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('${user.displayName} approved')),
+                    );
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Failed: ${_readableError(e)}')),
+                    );
+                  }
                 }
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Failed: ${_readableError(e)}')),
-                  );
-                }
-              }
-            },
-            child: const Text('Approve'),
-          ),
-        ],
+              },
+              child: const Text('Approve'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -335,7 +429,10 @@ class _AddUserDialogState extends ConsumerState<_AddUserDialog> {
                 initialValue: _selectedRole,
                 decoration: const InputDecoration(labelText: 'Role'),
                 items: UserRole.values
-                    .where((r) => r != UserRole.superadmin).map((r) => DropdownMenuItem(
+                    .where((r) =>
+                        ref.read(profileProvider).profile?.role == UserRole.superadmin ||
+                        r != UserRole.superadmin)
+                    .map((r) => DropdownMenuItem(
                           value: r,
                           child: Text(r.label),
                         ))
@@ -468,7 +565,10 @@ class _EditUserDialogState extends ConsumerState<_EditUserDialog> {
                 initialValue: _selectedRole,
                 decoration: const InputDecoration(labelText: 'Role'),
                 items: UserRole.values
-                    .where((r) => r != UserRole.superadmin).map((r) => DropdownMenuItem(
+                    .where((r) =>
+                        ref.read(profileProvider).profile?.role == UserRole.superadmin ||
+                        r != UserRole.superadmin)
+                    .map((r) => DropdownMenuItem(
                           value: r,
                           child: Text(r.label),
                         ))

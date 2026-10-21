@@ -7,10 +7,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../data/models/enums.dart';
+import '../data/models/man_hour_models.dart';
 import '../data/models/models.dart';
 import '../data/models/ops_models.dart';
 import '../data/models/workflows.dart';
+import '../data/man_hour_draft_cache.dart';
 import '../data/repositories/audit_repository.dart';
+import '../data/repositories/man_hour_sheet_repository.dart';
 import '../data/repositories/routine_task_repository.dart';
 import '../data/repositories/auth_repository.dart';
 import '../data/repositories/capa_repository.dart';
@@ -69,6 +72,158 @@ final truckRepositoryProvider = Provider(
 final opsRepositoryProvider = Provider(
   (ref) => OpsRepository(ref.watch(supabaseClientProvider)),
 );
+final manHourSheetRepositoryProvider = Provider(
+  (ref) => ManHourSheetRepository(ref.watch(supabaseClientProvider)),
+);
+
+/// Depot id to display name, used to label man-hour sheets.
+final depotNameMapProvider = Provider<Map<String, String>>((ref) {
+  final depots = ref.watch(depotListProvider).value ?? const <Depot>[];
+  return {for (final d in depots) d.id: d.name};
+});
+
+/// Identifies one depot's sheet for one calendar month.
+class ManHourSheetKey {
+  const ManHourSheetKey({
+    required this.depotId,
+    required this.year,
+    required this.month,
+  });
+
+  final String depotId;
+  final int year;
+  final int month;
+
+  @override
+  bool operator ==(Object other) =>
+      other is ManHourSheetKey &&
+      other.depotId == depotId &&
+      other.year == year &&
+      other.month == month;
+
+  @override
+  int get hashCode => Object.hash(depotId, year, month);
+}
+
+/// A sheet header together with its grid rows.
+class ManHourSheetBundle {
+  const ManHourSheetBundle({
+    required this.sheet,
+    required this.entries,
+    this.offline = false,
+  });
+
+  final ManHourSheet sheet;
+  final List<ManHourSheetEntry> entries;
+
+  /// True when the sheet could not be reached and the local draft is used.
+  final bool offline;
+
+  bool get isSubmitted => sheet.isSubmitted;
+  int get totalManHours => entries.fold(0, (a, e) => a + e.total);
+  int get totalWorkers => entries.fold(0, (a, e) => a + e.workerCount);
+}
+
+/// Sheets and grid rows for a whole year, used by the analytics view.
+class ManHourYearData {
+  const ManHourYearData({required this.sheets, required this.entries});
+
+  final List<ManHourSheet> sheets;
+  final Map<String, List<ManHourSheetEntry>> entries;
+
+  List<ManHourSheetEntry> entriesFor(String sheetId) =>
+      entries[sheetId] ?? const [];
+
+  List<ManHourSheet> sheetsForMonth(int month) =>
+      sheets.where((s) => s.periodMonth == month).toList(growable: false);
+
+  /// Total man-hours recorded in [month] across every depot.
+  int totalForMonth(int month) => sheetsForMonth(month)
+      .fold(0, (sum, s) => sum + entriesFor(s.id).fold(0, (a, e) => a + e.total));
+
+  /// Total man-hours for one depot in one month.
+  int totalForDepotMonth(String depotId, int month) => sheetsForMonth(month)
+      .where((s) => s.depotId == depotId)
+      .fold(0, (sum, s) => sum + entriesFor(s.id).fold(0, (a, e) => a + e.total));
+
+  /// Man-hours per depot for one month, keyed by depot id.
+  Map<String, int> byDepotForMonth(int month) {
+    final out = <String, int>{};
+    for (final sheet in sheetsForMonth(month)) {
+      out[sheet.depotId] = (out[sheet.depotId] ?? 0) +
+          entriesFor(sheet.id).fold(0, (a, e) => a + e.total);
+    }
+    return out;
+  }
+
+  /// Man-hours split by workforce category for one month.
+  Map<ManHourCategory, int> byCategoryForMonth(int month) {
+    final out = <ManHourCategory, int>{};
+    for (final sheet in sheetsForMonth(month)) {
+      for (final entry in entriesFor(sheet.id)) {
+        out[entry.category] = (out[entry.category] ?? 0) + entry.total;
+      }
+    }
+    return out;
+  }
+}
+
+/// The sheet of one depot for one month, with its grid rows.
+final manHourSheetProvider =
+    FutureProvider.family<ManHourSheetBundle, ManHourSheetKey>((ref, key) async {
+  final repo = ref.read(manHourSheetRepositoryProvider);
+  final profile = ref.read(profileProvider).profile;
+  final names = ref.watch(depotNameMapProvider);
+  try {
+    final sheet = await repo.ensureSheet(
+      depotId: key.depotId,
+      year: key.year,
+      month: key.month,
+      userId: profile?.id ?? '',
+      depotName: names[key.depotId] ?? '',
+    );
+    final entries = await repo.listEntries(sheet.id);
+    return ManHourSheetBundle(sheet: sheet, entries: entries);
+  } catch (_) {
+    // Offline: fall back to the device copy of the draft.
+    final draft = await ManHourDraftCache.read(
+      depotId: key.depotId,
+      year: key.year,
+      month: key.month,
+    );
+    final entries = (draft?.rows ?? const [])
+        .map((e) => ManHourSheetEntry.fromJson({...e, 'sheet_id': ''}))
+        .toList();
+    return ManHourSheetBundle(
+      sheet: ManHourSheet(
+        id: '',
+        depotId: key.depotId,
+        depotName: names[key.depotId] ?? '',
+        periodYear: key.year,
+        periodMonth: key.month,
+        status: (draft?.submitted ?? false)
+            ? ManHourSheetStatus.submitted
+            : ManHourSheetStatus.draft,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      ),
+      entries: entries,
+      offline: true,
+    );
+  }
+});
+
+/// Every sheet recorded in a year, with its grid rows.
+final manHourYearProvider =
+    FutureProvider.family<ManHourYearData, int>((ref, year) async {
+  final repo = ref.read(manHourSheetRepositoryProvider);
+  final names = ref.watch(depotNameMapProvider);
+  final sheets = await repo.listSheets(year: year, depotNames: names);
+  final entries = await repo.listEntriesForSheets(
+    sheets.map((s) => s.id).where((id) => id.isNotEmpty).toList(),
+  );
+  return ManHourYearData(sheets: sheets, entries: entries);
+});
 
 /// Trucks visible to the signed-in user. Country head / super admin see all.
 final trucksProvider = FutureProvider<List<Truck>>((ref) async {
@@ -92,6 +247,11 @@ final shiftHandoversProvider = FutureProvider<List<ShiftHandover>>((ref) async {
   final profile = ref.watch(profileProvider).profile;
   if (profile?.depotId == null) return const [];
   return ref.read(opsRepositoryProvider).listShiftHandovers(depotId: profile!.depotId);
+});
+
+/// All man-hours records (cross-depot) for country head / super admin.
+final allManHoursProvider = FutureProvider<List<ManHours>>((ref) async {
+  return ref.read(opsRepositoryProvider).listManHours(limit: 500);
 });
 
 /// Man-hours records for the signed-in user's depot.

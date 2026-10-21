@@ -3,6 +3,7 @@
 // Proprietary and confidential. Unauthorized copying, modification, distribution or reuse is prohibited.
 // Contact: +2349025975247
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -13,12 +14,14 @@ import '../../features/auth/signup_screen.dart';
 import '../../features/audit/audit_screen.dart';
 import '../../features/capa/capa_screen.dart';
 import '../../features/dashboard/dashboard_screen.dart';
+import '../../features/country_head/country_head_home_screen.dart';
 import '../../features/incidents/incidents_screens.dart';
 import '../../features/inspections/checklist_from_inspection_type_screen.dart';
 import '../../features/inspections/inspection_runner_screen.dart';
 import '../../features/inspections/inspection_types_screen.dart';
 import '../../features/inspections/inspections_screen.dart';
 import '../../features/manhours/manhours_screen.dart';
+import '../../features/manhours/man_hour_management_screen.dart';
 import '../../features/assets/assets_screen.dart';
 import '../../features/personnel/personnel_screen.dart';
 import '../../features/stand_in/stand_in_screen.dart';
@@ -92,7 +95,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         routes: [
           GoRoute(
             path: Routes.home,
-            builder: (context, state) => const DashboardScreen(),
+            builder: (context, state) => const _HomeDispatcher(),
           ),
           GoRoute(
             path: Routes.incidents,
@@ -196,6 +199,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: Routes.manHours,
             builder: (context, state) => const ManHoursScreen(),
           ),
+          GoRoute(
+            path: Routes.manHourManagement,
+            builder: (context, state) => const ManHourManagementScreen(),
+          ),
 
           // ---- Assets (P5) -------------------------------------------------
           GoRoute(
@@ -288,6 +295,83 @@ GoRoute(
     ),
   );
 });
+
+class _HomeDispatcher extends ConsumerStatefulWidget {
+  const _HomeDispatcher();
+
+  @override
+  ConsumerState<_HomeDispatcher> createState() => _HomeDispatcherState();
+}
+
+class _HomeDispatcherState extends ConsumerState<_HomeDispatcher> {
+  bool _showCountryHead = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPref();
+  }
+
+  Future<void> _loadPref() async {
+    final prefs = await SharedPreferences.getInstance();
+    final v = prefs.getBool('superadmin_home_country_head');
+    if (v != null && mounted) setState(() => _showCountryHead = v);
+  }
+
+  Future<void> _toggle(bool v) async {
+    setState(() => _showCountryHead = v);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('superadmin_home_country_head', v);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ref = this.ref;
+    final profile = ref.watch(profileProvider).profile;
+    final isCountryHead = profile != null && profile.role.isCountryHead;
+    final isSuperAdmin = profile != null && profile.role.isSuperAdmin;
+
+    if (!isCountryHead) return const DashboardScreen();
+
+    if (isSuperAdmin) {
+      return Column(
+        children: [
+          Material(
+            color: Theme.of(context).colorScheme.surface,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: Row(
+                children: [
+                  const Text('View:'),
+                  const SizedBox(width: 8),
+                  ChoiceChip(
+                    label: const Text('Country Head'),
+                    selected: _showCountryHead,
+                    onSelected: (_) => _toggle(true),
+                  ),
+                  const SizedBox(width: 8),
+                  ChoiceChip(
+                    label: const Text('Normal Home'),
+                    selected: !_showCountryHead,
+                    onSelected: (_) => _toggle(false),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const Divider(height: 1),
+          Expanded(
+            child: _showCountryHead
+                ? const CountryHeadHomeScreen()
+                : const DashboardScreen(),
+          ),
+        ],
+      );
+    }
+
+    return const CountryHeadHomeScreen();
+  }
+}
 
 class _NotFoundScreen extends StatelessWidget {
   const _NotFoundScreen({required this.location});
