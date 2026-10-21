@@ -25,20 +25,13 @@ class TaskRemindersScreen extends ConsumerStatefulWidget {
 class _TaskRemindersScreenState extends ConsumerState<TaskRemindersScreen> {
   bool _isLoading = false;
   String? _error;
-  DateTime? _selectedDate;
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedDate = DateTime.now();
-  }
 
   Future<void> _refresh() async {
     setState(() => _isLoading = true);
     try {
       // Refresh the providers
-      ref.refresh(allTaskRemindersProvider);
-      ref.refresh(profileProvider);
+      ref.invalidate(allTaskRemindersProvider);
+      ref.invalidate(profileProvider);
     } catch (e) {
       setState(() => _error = e.toString());
     } finally {
@@ -87,15 +80,29 @@ class _TaskRemindersScreenState extends ConsumerState<TaskRemindersScreen> {
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: _refresh,
-        child: taskRemindersAsync.when(
-          data: (reminders) => _buildRemindersList(reminders, ref),
-          loading: () => _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : const Center(child: CircularProgressIndicator()),
-          error: (e, stack) => ErrorView(message: 'Failed to load task reminders: $e'),
-        ),
+      body: Column(
+        children: [
+          if (_error != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: Text(
+                _error!,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: _refresh,
+              child: taskRemindersAsync.when(
+                data: (reminders) => _buildRemindersList(reminders, ref),
+                loading: () => _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : const Center(child: CircularProgressIndicator()),
+                error: (e, stack) => ErrorView(message: 'Failed to load task reminders: $e'),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

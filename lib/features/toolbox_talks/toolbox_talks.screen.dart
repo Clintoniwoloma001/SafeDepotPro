@@ -266,10 +266,10 @@ class _ToolboxTalksScreenState extends ConsumerState<ToolboxTalksScreen> {
          ]
        ),
        body: RefreshIndicator(
-         onRefresh: () async {
-           ref.refresh(toolboxTalksProvider(profile.depotId!));
-           ref.refresh(profileProvider);
-         },
+        onRefresh: () async {
+          ref.invalidate(toolboxTalksProvider(profile.depotId!));
+          ref.invalidate(profileProvider);
+        },
          child: toolboxTalksAsync.when(
            data: (talks) => _buildToolboxTalksList(talks, profile),
            loading: () => const Center(child: CircularProgressIndicator()),
@@ -291,7 +291,7 @@ class _ToolboxTalksScreenState extends ConsumerState<ToolboxTalksScreen> {
 
     return ListView.separated(
       padding: const EdgeInsets.all(AppTokens.spaceMd),
-      separatorBuilder: (_, __) => const Divider(height: 1),
+      separatorBuilder: (_, _) => const Divider(height: 1),
       itemCount: talks.length,
       itemBuilder: (context, index) {
         final talk = talks[index];
@@ -324,7 +324,6 @@ class _ToolboxTalkForm extends ConsumerStatefulWidget {
 class _ToolboxTalkFormState extends ConsumerState<_ToolboxTalkForm> {
   DateTime? _date;
   TimeOfDay? _time;
-  String? _topic;
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
@@ -332,7 +331,6 @@ class _ToolboxTalkFormState extends ConsumerState<_ToolboxTalkForm> {
   final _locationController = TextEditingController();
   final _categoryController = TextEditingController();
   final _tagController = TextEditingController();
-   final List<File> _selectedImages = [];
    final List<String> _attendeeNames = [];
    bool _isHighRisk = false;
    bool _saving = false;
@@ -342,7 +340,6 @@ class _ToolboxTalkFormState extends ConsumerState<_ToolboxTalkForm> {
     super.initState();
     _date = widget.initialDate ?? DateTime.now();
     _time = widget.initialTime ?? TimeOfDay.now();
-    _topic = widget.initialTopic;
   }
 
   Future<void> _selectDate() async {

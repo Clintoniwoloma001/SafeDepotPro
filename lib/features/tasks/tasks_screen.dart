@@ -13,7 +13,6 @@ import 'package:image_picker/image_picker.dart';
 import '../../core/router/routes.dart';
 import '../../core/theme/tokens.dart';
 import '../../data/models/enums.dart';
-import '../../data/models/models.dart';
 import '../../data/models/ops_models.dart';
 import '../../data/repositories/storage_repository.dart';
 import '../../providers/providers.dart';
@@ -30,6 +29,8 @@ final routineTasksProvider = FutureProvider<List<RoutineTask>>((ref) async {
 class _FrequencyFilterNotifier extends Notifier<Frequency> {
   @override
   Frequency build() => Frequency.daily;
+
+  void setFrequency(Frequency frequency) => state = frequency;
 }
 
 final taskFrequencyFilterProvider =
@@ -39,6 +40,8 @@ final taskFrequencyFilterProvider =
 class _TaskDateNotifier extends Notifier<DateTime> {
   @override
   DateTime build() => DateTime.now();
+
+  void setDate(DateTime date) => state = date;
 }
 
 final taskDateProvider =
@@ -48,6 +51,8 @@ final taskDateProvider =
 class _TaskTimeSlotNotifier extends Notifier<String?> {
   @override
   String? build() => null;
+
+  void setSlot(String? slot) => state = slot;
 }
 
 final taskTimeSlotFilterProvider =
@@ -82,6 +87,8 @@ final taskCompletionPhotoProvider = FutureProvider.family<String?, String>((ref,
 class _CompletedDateNotifier extends Notifier<DateTime> {
   @override
   DateTime build() => DateTime.now();
+
+  void setDate(DateTime date) => state = date;
 }
 
 final completedDateProvider =
@@ -111,7 +118,8 @@ class TasksScreen extends ConsumerWidget {
               children: [
                 _FrequencyFilterBar(
                   frequency: frequency,
-                  onChanged: (f) => ref.read(taskFrequencyFilterProvider.notifier).state = f,
+                  onChanged: (f) =>
+                      ref.read(taskFrequencyFilterProvider.notifier).setFrequency(f),
                 ),
                 _TaskDateAndSlotFilter(),
                 TabBar(
@@ -540,8 +548,8 @@ class _TaskCompletionFormState extends ConsumerState<TaskCompletionForm> {
         taskId: widget.task.id,
         status: TaskStatus.completed,
         photoPath: _photoPath,
-        userId: profile?.id,
-        depotId: profile?.depotId,
+        userId: profile.id,
+        depotId: profile.depotId,
       );
 
       if (!mounted) return;
@@ -575,20 +583,20 @@ class _CompletedTab extends ConsumerWidget {
     final recordsAsync = ref.watch(completedRecordsProvider(day));
     final theme = Theme.of(context);
 
-    String _fmtDate(DateTime d) {
+    String fmtDate(DateTime d) {
       const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
       const weekdays = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
       return '${weekdays[d.weekday - 1]} ${d.day} ${months[d.month - 1]} ${d.year}';
     }
 
-    String _groupHeader(DateTime d) {
+    String groupHeader(DateTime d) {
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day);
       final yest = today.subtract(const Duration(days: 1));
       final dd = DateTime(d.year, d.month, d.day);
       if (dd == today) return 'Today';
       if (dd == yest) return 'Yesterday';
-      return _fmtDate(dd);
+      return fmtDate(dd);
     }
 
     return Column(
@@ -599,13 +607,13 @@ class _CompletedTab extends ConsumerWidget {
             children: [
               ActionChip(
                 label: const Text('Today'),
-                onPressed: () => ref.read(completedDateProvider.notifier).state = DateTime.now(),
+                onPressed: () => ref.read(completedDateProvider.notifier).setDate(DateTime.now()),
               ),
               const SizedBox(width: 8),
               ActionChip(
                 label: const Text('Yesterday'),
-                onPressed: () => ref.read(completedDateProvider.notifier).state =
-                    DateTime.now().subtract(const Duration(days: 1)),
+                onPressed: () => ref.read(completedDateProvider.notifier).setDate(
+                    DateTime.now().subtract(const Duration(days: 1))),
               ),
               const SizedBox(width: 8),
               ActionChip(
@@ -618,12 +626,12 @@ class _CompletedTab extends ConsumerWidget {
                     lastDate: DateTime.now(),
                   );
                   if (picked != null) {
-                    ref.read(completedDateProvider.notifier).state = picked;
+                    ref.read(completedDateProvider.notifier).setDate(picked);
                   }
                 },
               ),
               const Spacer(),
-              Text(_fmtDate(day), style: theme.textTheme.labelSmall),
+              Text(fmtDate(day), style: theme.textTheme.labelSmall),
             ],
           ),
         ),
@@ -643,7 +651,7 @@ class _CompletedTab extends ConsumerWidget {
               // group by date
               final groups = <String, List<TaskCompletionRecord>>{};
               for (final r in filtered) {
-                final key = _groupHeader(r.completedAt);
+                final key = groupHeader(r.completedAt);
                 groups.putIfAbsent(key, () => []).add(r);
               }
               final orderedKeys = groups.keys.toList();
@@ -741,7 +749,7 @@ class _TaskDateAndSlotFilter extends ConsumerWidget {
                 lastDate: DateTime.now().add(const Duration(days: 365)),
               );
               if (picked != null) {
-                ref.read(taskDateProvider.notifier).state = picked;
+                ref.read(taskDateProvider.notifier).setDate(picked);
               }
             },
           ),
@@ -757,15 +765,17 @@ class _TaskDateAndSlotFilter extends ConsumerWidget {
                       child: FilterChip(
                         label: Text(s),
                         selected: slot == s,
-                        onSelected: (_) => ref.read(taskTimeSlotFilterProvider.notifier).state =
-                            slot == s ? null : s,
+                        onSelected: (_) => ref
+                            .read(taskTimeSlotFilterProvider.notifier)
+                            .setSlot(slot == s ? null : s),
                         labelStyle: theme.textTheme.labelSmall,
                       ),
                     ),
                   if (slot != null)
                     ActionChip(
                       label: const Text('Clear slot'),
-                      onPressed: () => ref.read(taskTimeSlotFilterProvider.notifier).state = null,
+                      onPressed: () =>
+                          ref.read(taskTimeSlotFilterProvider.notifier).setSlot(null),
                     ),
                 ],
               ),

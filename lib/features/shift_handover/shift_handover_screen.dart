@@ -3,24 +3,17 @@
 // Proprietary and confidential. Unauthorized copying, modification, distribution or reuse is prohibited.
 // Contact: +2349025975247
 
-import 'dart:io';
 import 'package:flutter/services.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:signature/signature.dart';
 
-import '../../core/router/routes.dart';
-import '../../core/theme/tokens.dart';
 import '../../data/models/enums.dart';
 import '../../data/models/models.dart';
 import '../../data/models/ops_models.dart';
 import '../../data/models/workflows.dart';
-import '../../data/repositories/storage_repository.dart';
 import '../../providers/providers.dart';
-import '../shared/photo_capture_sheet.dart';
 import '../shared/signature_pad.dart';
 import '../shared/ui_kit.dart' hide LoadingView, ErrorView, InlineError;
 
@@ -189,7 +182,7 @@ class _ShiftHandoverScreenState extends ConsumerState<ShiftHandoverScreen> {
           .map((e) => e.trim())
           .where((e) => e.isNotEmpty)
           .toList(growable: false);
-      final handover = await ref.read(opsRepositoryProvider).createShiftHandover(
+      await ref.read(opsRepositoryProvider).createShiftHandover(
         depotId: depotId,
         shift: _shift,
         date: dateStr,
@@ -438,15 +431,9 @@ class _HandoverForm extends StatelessWidget {
   final String? selectedIncomingUserId;
   final ValueChanged<String?> onIncomingUserChanged;
 
-  static String _formatDate(DateTime d) {
-    final local = d.toLocal();
-    return '${local.year}-${local.month.toString().padLeft(2, '0')}-${local.day.toString().padLeft(2, '0')}';
-  }
-
   @override
   Widget build(BuildContext context) {
     final bottom = MediaQuery.of(context).viewInsets.bottom;
-    final theme = Theme.of(context);
     return Padding(
       padding: EdgeInsets.fromLTRB(24, 24, 24, 24 + bottom),
       child: SingleChildScrollView(

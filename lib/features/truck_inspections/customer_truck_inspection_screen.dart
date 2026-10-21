@@ -2,7 +2,6 @@
 // Designed and developed by Clinton Iwoloma — The Imaginr, CEO, Flatra Tech Ltd.
 // Proprietary and confidential. Unauthorized copying, modification, distribution or reuse is prohibited.
 // Contact: +2349025975247
-import 'package:flutter/foundation.dart';
 // © Flatra Tech Ltd. All rights reserved.
 // Designed and developed by Clinton Iwoloma — The Imaginr, CEO, Flatra Tech Ltd.
 // Proprietary and confidential. Unauthorized copying, modification, distribution or reuse is prohibited.
@@ -124,12 +123,6 @@ class CustomerTruckInspectionScreen extends ConsumerWidget {
         child: _InspectionHistorySheet(profile: ref.read(profileProvider).profile),
       ),
     );
-  }
-
-  static String _format(DateTime d) {
-    final local = d.toLocal();
-    return '${local.year}-${local.month.toString().padLeft(2, '0')}-${local.day.toString().padLeft(2, '0')} '
-        '${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
   }
 
   void _showAddTruckDialog(BuildContext context, WidgetRef ref) {
@@ -617,14 +610,6 @@ class _TruckCardState extends ConsumerState<_TruckCard> {
     );
   }
 
-  Future<TruckInspectionItemResponse?> _inspectItem(
-      TruckInspectionTemplateItem item) async {
-    return showDialog<TruckInspectionItemResponse>(
-      context: context,
-      builder: (ctx) => _ItemInspectionDialog(item: item),
-    );
-  }
-
   Future<TruckResult?> _runTemplateInspection(
       TruckInspectionTemplate template,
       List<TruckInspectionTemplateItem> items) async {
@@ -921,7 +906,6 @@ class _ItemInspectionDialogState extends State<_ItemInspectionDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final item = widget.item;
 
     return AlertDialog(
@@ -1056,12 +1040,6 @@ class _ItemInspectionDialogState extends State<_ItemInspectionDialog> {
   }
 }
 
-/// Provider for attendees of a specific toolbox talk.
-final _toolboxTalkAttendeesProvider =
-    FutureProvider.family<List<ToolboxAttendee>, String>((ref, talkId) async {
-  return ref.read(opsRepositoryProvider).listAttendees(talkId);
-});
-
 class _ChecklistResult {
   const _ChecklistResult(this.result, this.responses, this.compliance);
   final TruckResult result;
@@ -1070,7 +1048,7 @@ class _ChecklistResult {
 }
 
 class _TruckChecklistDialog extends ConsumerStatefulWidget {
-  const _TruckChecklistDialog({super.key, required this.items});
+  const _TruckChecklistDialog({required this.items});
 
   final List<TruckInspectionTemplateItem> items;
 

@@ -1,3 +1,7 @@
+-- © Flatra Tech Ltd. All rights reserved.
+-- Designed and developed by Clinton Iwoloma — The Imaginr, CEO, Flatra Tech Ltd.
+-- Proprietary and confidential. Unauthorized copying, modification, distribution or reuse is prohibited.
+-- Contact: +2349025975247
 -- Pending approval for self-service signups.
 create or replace function public.handle_new_user()
 returns trigger

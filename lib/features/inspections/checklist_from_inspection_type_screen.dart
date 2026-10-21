@@ -124,6 +124,18 @@ class _ChecklistFromInspectionTypeScreenState
           const SizedBox(height: 16),
           InlineError(_error!),
         ],
+        const SizedBox(height: 24),
+        FilledButton.icon(
+          onPressed: _saving ? null : _submit,
+          icon: _saving
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2.2),
+                )
+              : const Icon(Icons.check, size: 18),
+          label: Text(_saving ? 'Submitting…' : 'Submit inspection'),
+        ),
       ],
     );
   }

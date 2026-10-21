@@ -11,9 +11,6 @@ import '../../../../data/models/enums.dart';
 import '../../../../providers/providers.dart';
 import '../../../../core/router/routes.dart';
 import '../shared/components.dart';
-import '../settings/appearance_screen.dart';
-import '../settings/depot_geofence_settings_screen.dart';
-import '../user_management/user_management_screen.dart';
 
 /// Settings hub screen with access to all settings modules.
 ///

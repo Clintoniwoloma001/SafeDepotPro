@@ -25,7 +25,6 @@ class PermitsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final permits = ref.watch(permitsProvider);
-    final profile = ref.watch(profileProvider).profile;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Safety & Inspections')),
@@ -86,7 +85,7 @@ class _PermitCardState extends ConsumerState<PermitCard> {
       }
 
       if (!mounted) return;
-      ref.refresh(permitsProvider);
+      ref.invalidate(permitsProvider);
     } catch (e) {
       if (!mounted) return;
       setState(() => _error = readableError(e));
@@ -154,6 +153,15 @@ class _PermitCardState extends ConsumerState<PermitCard> {
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
+            if (_error != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                _error!,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.error,
+                ),
+              ),
+            ],
           ],
         ),
         trailing: Column(

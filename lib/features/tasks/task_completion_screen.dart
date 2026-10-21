@@ -6,11 +6,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/theme/tokens.dart';
-import '../../data/models/enums.dart';
-import '../../data/models/models.dart';
-import '../../data/models/ops_models.dart';
-import '../../providers/providers.dart';
 import '../shared/ui_kit.dart';
 import '../tasks/tasks_screen.dart';
 
