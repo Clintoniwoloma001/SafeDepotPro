@@ -247,6 +247,9 @@ class ManHourExporter {
     row++;
     sheet.getRangeByIndex(row, 1).setText('Entries');
     sheet.getRangeByIndex(row, 2).setNumber(rows.length.toDouble());
+
+    // Make the header row filterable so depot leads can slice the export.
+    sheet.autoFilters.filterRange = sheet.getRangeByIndex(3, 1, 3, 5);
   }
 
   /// Lays out the cross-depot summary sheet.
@@ -317,6 +320,9 @@ class ManHourExporter {
     hoursCell.setNumber(grandHours.toDouble());
     hoursCell.cellStyle.bold = true;
     hoursCell.cellStyle.backColor = _totalFill;
+
+    // Make the header row filterable so depot leads can slice the export.
+    sheet.autoFilters.filterRange = sheet.getRangeByIndex(4, 1, 4, 4);
   }
 
   static Future<File> _save(xlsio.Workbook workbook, String fileName) async {

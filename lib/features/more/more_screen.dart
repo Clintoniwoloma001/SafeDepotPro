@@ -40,7 +40,6 @@ class MoreScreen extends ConsumerWidget {
             items: [
               _Item('Toolbox Talks', Icons.groups_outlined, Routes.toolbox),
               _Item('Shift Handover', Icons.swap_horiz_rounded, Routes.handover),
-              _Item('Man-Hours', Icons.schedule_outlined, Routes.manHours),
               _Item('Man-Hour Sheets & Analytics', Icons.grid_on_outlined,
                   Routes.manHourManagement),
             ],
