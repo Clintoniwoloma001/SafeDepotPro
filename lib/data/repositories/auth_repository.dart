@@ -144,7 +144,7 @@ class AuthRepository {
       AdminUserAttributes(
         email: email,
         emailConfirm: true,
-        userMetadata: {'display_name': displayName},
+        userMetadata: {'full_name': displayName},
       ),
     );
     final userId = authRes.user?.id;
@@ -153,7 +153,7 @@ class AuthRepository {
     await _client.from(profilesTable).insert({
       'id': userId,
       'email': email,
-      'display_name': displayName,
+      'full_name': displayName,
       'role': role.wire,
       'depot_id': depotId,
       'is_active': true,
@@ -169,10 +169,9 @@ class AuthRepository {
     String? depotId,
   }) async {
     await _client.from(profilesTable).update({
-      'display_name': displayName,
+      'full_name': displayName,
       'role': role.wire,
       'depot_id': depotId,
-      'updated_at': DateTime.now().toUtc().toIso8601String(),
     }).eq('id', userId);
   }
 
@@ -181,7 +180,6 @@ class AuthRepository {
   Future<void> deactivateUser(String userId) async {
     await _client.from(profilesTable).update({
       'is_active': false,
-      'updated_at': DateTime.now().toUtc().toIso8601String(),
     }).eq('id', userId);
   }
 
@@ -199,7 +197,6 @@ class AuthRepository {
   Future<void> activateUser(String userId) async {
     await _client.from(profilesTable).update({
       'is_active': true,
-      'updated_at': DateTime.now().toUtc().toIso8601String(),
     }).eq('id', userId);
   }
 
